@@ -1,0 +1,20 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 10.00
+# Visual Studio 2008
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MicrotouchTool", "MicrotouchTool\MicrotouchTool.csproj", "{DAD35F9C-8D37-4B3B-8FEE-815DF893E0BA}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{DAD35F9C-8D37-4B3B-8FEE-815DF893E0BA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DAD35F9C-8D37-4B3B-8FEE-815DF893E0BA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DAD35F9C-8D37-4B3B-8FEE-815DF893E0BA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DAD35F9C-8D37-4B3B-8FEE-815DF893E0BA}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
