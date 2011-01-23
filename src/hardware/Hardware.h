@@ -31,7 +31,6 @@ public:
 	static void GetAccelerometer(signed char* xyz);
 	static u8	GetTouch(TouchData* t);
 	static int	GetBatteryMillivolts();
-
 	static void Profile(bool on);
 };
 
@@ -39,3 +38,7 @@ extern Hardware_ Hardware;
 
 #define millis() Hardware.GetTicks()
 #define micros() (Hardware.GetPerfCounter() >> 1);
+
+static uint16_t GetBattMillivolts();
+int8_t	USBPutChar(u8 c);
+int USBGetChar();

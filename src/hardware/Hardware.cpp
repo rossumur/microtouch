@@ -98,6 +98,7 @@ void Sample(u8* stack)
 u8 _sampler = 0;
 u16 _perfhi = 0;
 u16 _perf = 0;
+
 ISR(TIMER1_OVF_vect)	// (clk div 8)/65536 if sampling not running, clk/65536 if sampling
 {
 	if (_sampler)
@@ -106,11 +107,22 @@ ISR(TIMER1_OVF_vect)	// (clk div 8)/65536 if sampling not running, clk/65536 if 
 		Sample(&mark);
 	}
 
+	// determine if we need to 
     if (++_perf == 0)
-		++_perfhi;
-	if (_blStep)
-		BacklightTask();
+      ++_perfhi;
+    if (_blStep)
+      BacklightTask();
+
+    // dim as battery dies
+    if ((OCR3A > 10) && (GetBattMillivolts() < 3700) ) {
+      OCR3A-=5;
+    }
+    //if ((OCR3A < 240) && (GetBattMillivolts() > 4200) ) {
+    //  OCR3A+=2;
+    //}
 }
+
+
 
 void Hardware_::Profile(bool on)
 {
@@ -222,6 +234,39 @@ int Hardware_::GetBatteryMillivolts()
 	return d >> 8;	//Battery divider scaled to millivolts from reference
 }
 
+uint16_t GetBattMillivolts()
+{
+  uint8_t ddr, port;
+
+  ddr = DDRF;
+  port = PORTF;
+
+  DDRF &= 0x7F;
+  PORTF &= 0x7F;
+  long d = ReadADC(7);
+
+  DDRF = ddr;
+  PORTF = port;
+
+  d *= 1652;
+
+  d>>=8;
+  
+  /*
+  USBPutChar((d/1000) + '0');
+  USBPutChar('.');
+  d %= 1000;
+  USBPutChar((d/100) + '0');
+  d %= 100;
+  USBPutChar((d/10) + '0');
+  d %= 10;
+  USBPutChar(d + '0');
+  USBPutChar('\t');
+  */
+
+  return d;
+}
+
 //====================================================================
 //====================================================================
 //  Touch stuff
@@ -234,23 +279,35 @@ void ADC_Init()
 
 int ReadADC(uint8_t ch)
 {
-    //Select ADC Channel ch must be 0-7
-    ADMUX &= ~7;
-    if (ch > 7)
-        ADCSRB |= 0x20;
-    else
-        ADCSRB &= ~0x20;
-    ADMUX |= ch & 7;
-            
-    ADCSRA |= 1 << ADEN;
-    ADCSRA |= 1<<ADSC;
-    while(!(ADCSRA & 0x10));		// throw away first conversion
+  cli();
 
-    ADCSRA |= 1<<ADSC;
-    while(!(ADCSRA & 0x10));
-	int a = ((ADCL)| ((ADCH)<<8)); // 10-bit conversion;
-	ADCSRA &= ~(1 << ADEN);
-	return a;
+  // Clear ADMUX's bottom 5 bits (MUX4:0)
+  ADMUX &= ~ 0x1F;
+
+  if ((ch > 8) && (ch <= 13)) {
+    // see table 24-4
+    ch += 24;
+  }
+
+  // MUX5 is in a different register
+  if (ch & 0x20)
+    ADCSRB |= 0x20;
+  else
+    ADCSRB &= ~0x20;
+    
+  ADMUX |= ch & 0x1F;
+            
+  ADCSRA |= 1 << ADEN;
+  ADCSRA |= 1<<ADSC;
+  while(!(ADCSRA & 0x10));		// throw away first conversion
+  
+  ADCSRA |= 1<<ADSC;
+  while(!(ADCSRA & 0x10));
+  int a = ((ADCL)| ((ADCH)<<8)); // 10-bit conversion;
+  ADCSRA &= ~(1 << ADEN);
+
+  sei();
+  return a;
 }
 
 void quicksort(int arr[], int left, int right)
@@ -511,8 +568,6 @@ u8 Hardware_::GetTouch(TouchData* e)
 }
 
 
-int8_t	USBPutChar(u8 c);
-int USBGetChar();
 
 void USBInit();
 static int usb_putchar(char c, FILE *stream)
