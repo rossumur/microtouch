@@ -114,12 +114,9 @@ ISR(TIMER1_OVF_vect)	// (clk div 8)/65536 if sampling not running, clk/65536 if 
       BacklightTask();
 
     // dim as battery dies
-    if ((OCR3A > 10) && (GetBattMillivolts() < 3700) ) {
-      OCR3A-=5;
+    while ((OCR3A > 10) && (GetBattMillivolts() < 3700) ) {
+      OCR3A --;
     }
-    //if ((OCR3A < 240) && (GetBattMillivolts() > 4200) ) {
-    //  OCR3A+=2;
-    //}
 }
 
 
