@@ -21,6 +21,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#define MAX_APP_BUFFER 768
+
 #ifndef byte
 typedef unsigned char byte;
 typedef unsigned short ushort;
@@ -143,7 +145,6 @@ public:
 	};
 };
 
-#define MAX_APP_BUFFER 768
 typedef int (*AppProc)(Event* e, void* appState);
 
 //	Application installer macro

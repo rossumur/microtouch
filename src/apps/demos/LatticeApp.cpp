@@ -158,8 +158,10 @@ class LatticeState
 
 		int WIDTH = Graphics.Height();
 		int HEIGHT = Graphics.Width();
-		int dx = 205;
-		int dy = 191;
+	//	int dx = 205;
+	//	int dy = 191;
+		int dx = 167;
+		int dy = 163;
 		if (WIDTH < 240)
 		{
 			// 128x128, 160x128

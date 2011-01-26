@@ -51,8 +51,8 @@ HEX_EEPROM_FLAGS += --change-section-lma .eeprom=0 --no-change-warnings
 LINKONLYOBJECTS = 
 
 ## Define application folders here
-APPLICATIONS := apps/hardware
-##APPLICATIONS := apps/demos
+##APPLICATIONS := apps/hardware
+APPLICATIONS := apps/demos
 ##APPLICATIONS := apps/pacman
 ##APPLICATIONS := apps/3D
 

@@ -15,6 +15,8 @@ namespace MicrotouchProfiler
 {
     public partial class Form1 : Form
     {
+        delegate void TextDelegate(string t);
+
         Profiler _profiler = new Profiler();
         Font _font = new Font("Lucida Console", 8);
         int _lineHeight;
@@ -27,7 +29,7 @@ namespace MicrotouchProfiler
             vScrollBar1.ValueChanged += vScrollBar1_ValueChanged;
             panel1.Resize += panel1_Resize;
             _lineHeight = (int)_font.GetHeight() + 3;
-            Update();
+            Report();
         }
 
         void CheckSerial()
@@ -37,6 +39,8 @@ namespace MicrotouchProfiler
             string com = MicrotouchSerial();
             if (com != null)
                 OpenSerial(com);
+            else
+                SetStatus("Microtouch not found");
         }
 
         string MicrotouchSerial()
@@ -58,6 +62,16 @@ namespace MicrotouchProfiler
             return null;
         }
 
+        void SetStatus(string s)
+        {
+            if (InvokeRequired)
+            {
+                this.Invoke(new TextDelegate(SetStatus), new object[] { s });
+                return;
+            }
+            toolStripStatusLabel1.Text = s;
+        }
+
         void OpenSerial(string name)
         {
             ThreadPool.QueueUserWorkItem(new WaitCallback(SerialReader),name);
@@ -66,39 +80,44 @@ namespace MicrotouchProfiler
         void SerialReader(object state)
         {
             _serialRunning = true;
+            string com = (string)state;
             try
             {
-                SerialPort serial = new SerialPort((string)state);
-                serial.Open();
-                byte[] b = Encoding.UTF8.GetBytes("p1" + ((char)0x0D));
-                serial.Write(b, 0, b.Length);
-
-                for (; ; )
+                using (SerialPort serial = new SerialPort(com))
                 {
-                    string s = serial.ReadLine().Trim();
-                    if (s == null)
-                        break;
-                    if (s.Length == 4 && _profiler != null)
+                    serial.Open();
+                    byte[] b = Encoding.UTF8.GetBytes("p1" + ((char)0x0D));
+                    serial.Write(b, 0, b.Length);
+                    SetStatus("Microtouch connected on " + com);
+
+                    for (; ; )
                     {
-                        try
+                        string s = serial.ReadLine().Trim();
+                        if (s == null)
+                            break;
+                        if (s.Length == 4 && _profiler != null)
                         {
-                            _profiler.AddSample(Convert.ToInt32(s, 16));
-                            _sampleCount++;
+                            try
+                            {
+                                _profiler.AddSample(Convert.ToInt32(s, 16));
+                                _sampleCount++;
+                            }
+                            catch (Exception ex)
+                            {
+                                Console.WriteLine(ex);
+                            }
                         }
-                        catch (Exception ex)
+                        else
                         {
-                            Console.WriteLine(ex);
+                            // Console.WriteLine(s);
                         }
-                    }
-                    else
-                    {
-                        // Console.WriteLine(s);
                     }
                 }
             }
             catch (Exception e)
             {
                 Console.WriteLine(e);
+                SetStatus("Failed to open Microtouch on " + com + ", try replugging");
             }
             _serialRunning = false;
         }
@@ -111,7 +130,7 @@ namespace MicrotouchProfiler
                 return;
             _profiler.Open(fd.FileName);
             UpdateCode();
-            Update();
+            Report();
         }
 
         Color GetColor(int s, int count)
@@ -157,25 +176,15 @@ namespace MicrotouchProfiler
             panel1.Invalidate();
         }
 
-        void Update()
+        void Report()
         {
             CheckSerial();
 
             _profiler.Report();
             int count = _profiler.ReportCount;
 
-            string status;
             if (_serialRunning)
-                status = String.Format("Microtouch connected ({0} samples)", _sampleCount);
-            else
-            {
-                string s = MicrotouchSerial();
-                if (s != null)
-                    status = "Microtouch found on " + s;
-                else
-                    status = "Microtouch not detected";
-            }
-            toolStripStatusLabel1.Text = status;
+                SetStatus(String.Format("Microtouch connected ({0} samples)", _sampleCount));
 
             List<Profiler.SampleCount> perModule = _profiler.PerModule;
             listView1.SuspendLayout();
@@ -192,7 +201,7 @@ namespace MicrotouchProfiler
 
         private void timer1_Tick(object sender, EventArgs e)
         {
-            Update();
+            Report();
         }
 
         private void listView1_SelectedIndexChanged(object sender, EventArgs e)

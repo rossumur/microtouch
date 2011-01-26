@@ -120,7 +120,7 @@ public:
 			case Event::OpenApp:
 				{
 					Reset();
-					DotDrawStr(PStr(Shell_AppName()),4,42,68,_dotColor);
+					DotDrawStr(PStr(Shell_AppName()),4,42,68,_dotColor,true);
 				}
 				break;
 
