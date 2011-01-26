@@ -98,8 +98,12 @@ void Sample(u8* stack)
 u8 _sampler = 0;
 u16 _perfhi = 0;
 u16 _perf = 0;
+u16 _powerOffCount;
 
-ISR(TIMER1_OVF_vect)	// (clk div 8)/65536 if sampling not running, clk/65536 if sampling
+u8 USBConnected();
+#define POWER_OFF_COUNT ((int)(5*60*30.5))	// 5 minutes
+
+ISR(TIMER1_OVF_vect)	// (clk div 8)/65536 ~30.5hz
 {
 	if (_sampler)
 	{
@@ -107,19 +111,19 @@ ISR(TIMER1_OVF_vect)	// (clk div 8)/65536 if sampling not running, clk/65536 if 
 		Sample(&mark);
 	}
 
-	// determine if we need to 
-    if (++_perf == 0)
+    if (++_perf == 0)	// rollover perf counter every 35 minutes or so
       ++_perfhi;
+
+	if (!--_powerOffCount)
+	{
+		if (!USBConnected())
+			Hardware.PowerOff();	// Only power off if not connected to USB
+		_powerOffCount = POWER_OFF_COUNT;
+	}
+
     if (_blStep)
       BacklightTask();
-
-    // dim as battery dies
-    while ((OCR3A > 10) && (GetBattMillivolts() < 3700) ) {
-      OCR3A --;
-    }
 }
-
-
 
 void Hardware_::Profile(bool on)
 {
@@ -231,39 +235,6 @@ int Hardware_::GetBatteryMillivolts()
 	return d >> 8;	//Battery divider scaled to millivolts from reference
 }
 
-uint16_t GetBattMillivolts()
-{
-  uint8_t ddr, port;
-
-  ddr = DDRF;
-  port = PORTF;
-
-  DDRF &= 0x7F;
-  PORTF &= 0x7F;
-  long d = ReadADC(7);
-
-  DDRF = ddr;
-  PORTF = port;
-
-  d *= 1652;
-
-  d>>=8;
-  
-  /*
-  USBPutChar((d/1000) + '0');
-  USBPutChar('.');
-  d %= 1000;
-  USBPutChar((d/100) + '0');
-  d %= 100;
-  USBPutChar((d/10) + '0');
-  d %= 10;
-  USBPutChar(d + '0');
-  USBPutChar('\t');
-  */
-
-  return d;
-}
-
 //====================================================================
 //====================================================================
 //  Touch stuff
@@ -276,8 +247,6 @@ void ADC_Init()
 
 int ReadADC(uint8_t ch)
 {
-  cli();
-
   // Clear ADMUX's bottom 5 bits (MUX4:0)
   ADMUX &= ~ 0x1F;
 
@@ -303,7 +272,6 @@ int ReadADC(uint8_t ch)
   int a = ((ADCL)| ((ADCH)<<8)); // 10-bit conversion;
   ADCSRA &= ~(1 << ADEN);
 
-  sei();
   return a;
 }
 
@@ -523,6 +491,7 @@ void Touch_Init()
 	t.y1 = 890;
 	_touchState.changed = 0;
 	Storage_Read('T',sizeof(TouchConfig),&t);
+	_powerOffCount = POWER_OFF_COUNT;
 }
 
 //	Called to calibrate TouchConfig
@@ -539,6 +508,10 @@ void TouchLast(TouchData& t)
 
 u8 Hardware_::GetTouch(TouchData* e)
 {
+    // dim backlight as battery dies
+	while ((OCR3A > 10) && (GetBatteryMillivolts() < 3700))
+		OCR3A--;
+
 	TouchState& st = _touchState;
 	e->pressure = TouchOversample(&e->x,&e->y);
 
@@ -559,14 +532,15 @@ u8 Hardware_::GetTouch(TouchData* e)
 		TouchConfig& t = _touchConfig;
 		e->x = mapp(e->x,t.x0,t.x1,240);
 		e->y = mapp(e->y,t.y0,t.y1,320);
+		_powerOffCount = POWER_OFF_COUNT;	// reset auto off
 	}
 	DATAOUT;
 	return e->pressure;
 }
 
 
-
 void USBInit();
+void USBPutChar(u8 c);
 static int usb_putchar(char c, FILE *stream)
 {
 	USBPutChar(c);

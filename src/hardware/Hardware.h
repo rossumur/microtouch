@@ -38,7 +38,3 @@ extern Hardware_ Hardware;
 
 #define millis() Hardware.GetTicks()
 #define micros() (Hardware.GetPerfCounter() >> 1);
-
-static uint16_t GetBattMillivolts();
-int8_t	USBPutChar(u8 c);
-int USBGetChar();

@@ -19,25 +19,24 @@ class File;
 class Graphics_
 {
 public:
-    static void Init();
-	static int  Height();
-	static int  Width();
+	static void Init();
+	static int	Height();
+	static int	Width();
 
-	static void Clear(int color = 0xFFFF);
-    static void Rectangle(int x, int y, int width, int height, int color);
-	static void Circle(int cx, int cy, int radius, int color, bool fill);
+	static void	Clear(int color = 0xFFFF);
+	static void	Rectangle(int x, int y, int width, int height, int color);
+	static void	Circle(int cx, int cy, int radius, int color, bool fill);
 
-    static int  MeasureString(const char* s, int len);
-    static int  DrawString(const char* s, int len, int x, int y, int color);
-	static int  DrawString(const char* s, int x, int y, int color);
-    static int  DrawDotString(const char* s, int len, int x, int y, int radius);
+	static int	MeasureString(const char* s, int len);
+	static int	DrawString(const char* s, int len, int x, int y, int color);
+	static int	DrawString(const char* s, int x, int y, int color);
 
-    static void SetPixel(int x, int y, int color);
-    
-    static void DrawImage(File& file, int x, int y, int scroll = 0, int lines = 0);
+	static void	SetPixel(int x, int y, int color);
+
+	static void	DrawImage(File& file, int x, int y, int scroll = 0, int lines = 0);
 
 	//	Low level direct graphics
-	static void OpenBounds();
+	static void	OpenBounds();
 	static void SetBounds(int x, int y, int width, int height);
 	static void Fill(int color, u32 count);
 	static void Blit(const u8* data, u32 count);
@@ -45,7 +44,7 @@ public:
 	static void Scroll(int y);
 	static void Direction(u8 landscape, u8 dx = 1, u8 dy = 1);
 
-	static u16 ToColor(u8 r, u8 g, u8 b);
+	static u16	ToColor(u8 r, u8 g, u8 b);
 };
 
 extern Graphics_ Graphics;
@@ -57,16 +56,16 @@ extern Graphics_ Graphics;
 #define BLUE	(TOCOLOR(0x00,0x00,0xFF))
 
 typedef struct {
-    byte sig[4];
-    long hdrSize;
-    long width;
-    long height;
-    byte format;
-    byte reserved0;
-    byte colors;
-    byte restartInterval;
-    long reserved1;
+	byte sig[4];
+	long hdrSize;
+	long width;
+	long height;
+	byte format;
+	byte reserved0;
+	byte colors;
+	byte restartInterval;
+	long reserved1;
 } Img2;
 
-
-void DotDrawStr(const char* s, int len, int x, int y, int dotColor, bool erase = false, int bgColor = 0xFFFF);
+// Nasty dot string hack
+void DotDrawStr(const char* s, int len, int x, int y, int dotColor, bool erase, int bgColor = -1);
