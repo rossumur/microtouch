@@ -95,6 +95,8 @@ Now we can scrawl lots of randomly colored hellos over the screen and we can eve
 the bottom of the screen. The Graphics.h api is fairly self explanatory: it uses 5:6:5 RGB color
 and supports circles, rectangles and blitting as well as text.
 
+Stdout is connected to the USB serial port so feel free to use printf for debugging.
+
 ## Applications
 
 There are a number of example applications that exercise various parts of system. They don't all fit 
@@ -201,4 +203,11 @@ a module to move to its start in the lss file.
 
 The built-in profiler works by sampling the PC from a timer ISR and printing it over the USB serial.
 If you like hexidecimal numbers you can turn the profiler on and off by typing 'p1' and 'p0' in the console.
+
+### Microtouch Simulator
+
+A Win32 based simulator for developing Microtouch applications without the actual hardware.
+Simulation is pixel accurate an includes a console window that emulates usb serial stdio.
+The accelerometer is emulated by a series sine waves of varing period, touch pressure is selected with keys '1' thru '9'
+CPU performance is not accurately emulated.
 

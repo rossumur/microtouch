@@ -39,34 +39,11 @@ void File::Init()
 #endif
 }
 
-#if 0
-byte File::OpenMem(const byte* data)
-{
-    _progmem = data;
-    return 0;
-}
-#endif
-
-#if 0
-bool File::FileInfo(const char* path, ulong* length)
-{
-#if USE_WIN32_FS
-    *length = 0;
-    return ::GetFileAttributesA(path) != INVALID_FILE_ATTRIBUTES;
-#else
-    ulong sector;
-    return microfat2::locateFileStart(path,sector,*length);
-#endif
-}
-#endif
-
-void Console(const char* s);
-
 byte File::Open(const char* path)
 {
 #ifdef USE_WIN32_FS
     char s[1024];
-    sprintf(s,"C:\\Users\\peter\\Documents\\Visual Studio 2008\\Projects\\LCDEmu\\root\\%s",path);
+    sprintf(s,"microSD\\%s",path);
     if (_h != INVALID_HANDLE_VALUE)
         ::CloseHandle(_h);
     _h = ::CreateFileA(s,
@@ -77,7 +54,7 @@ byte File::Open(const char* path)
             FILE_ATTRIBUTE_NORMAL,
             NULL );
     Load(0);
-    _fileLength = GetFileSize( _h, NULL );
+    _extent.fileLength = GetFileSize( _h, NULL );
     return _h == INVALID_HANDLE_VALUE ? 0 : 1;
 #else
 

@@ -86,7 +86,7 @@ public:
 	{
 		if (_fade < 64)
 		{
-			int color = ((_fade << 10) & 0xF800) | (_fade << 5) | 0x001F;
+			int color = 0xF800 | ((_fade << 5) & 0x07C0) | (_fade >> 1);
 			DotDrawStr(PStr(Shell_AppName()),5,32,68,color,_fade == 0);
 			_fade++;
 		}

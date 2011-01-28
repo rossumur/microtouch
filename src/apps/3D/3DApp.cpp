@@ -723,7 +723,7 @@ class D3DState
 
     void Rotate()
     {
-        #if true
+        #if 1
 		_filter.Sample();
 		_rotY = _filter.X;
 		_rotX = _filter.Y;

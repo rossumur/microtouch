@@ -129,7 +129,6 @@ class HWTestState
 	int _fade;
 	u32	_lastTicks;
 	Widget _widgets[WIDGET_COUNT];
-	u8	_buffer[512];
 
 public:
 	void Init()
@@ -173,7 +172,8 @@ public:
 			_widgets[6].Set(PStr(S_Ready));
 			if (_widgets[7].value == 0)
 			{
-				u8 fat = FAT_Init(_buffer,MMC_ReadSector);
+				u8 buffer[512];
+				u8 fat = FAT_Init(buffer,MMC_ReadSector);
 				const char* s;
 				_widgets[7].value = 1;
 				switch (fat)

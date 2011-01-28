@@ -120,6 +120,14 @@ u8 FAT_Init(u8* buf, ReadProc readProc)
 //  Cache the last file opened...
 DirectoryEntry _last_directory_entry;
 
+#ifdef USE_WIN32_FS
+int SimFAT_Directory(DirectoryProc directoryProc, u8* buffer, void* ref);
+int FAT_Directory(DirectoryProc directoryProc, u8* buffer, void* ref)
+{
+	return SimFAT_Directory(directoryProc,buffer,ref);
+}
+
+#else
 //	Traverse Directory
 //	TODO: This won't work properly on fragmented root directories; unlikely in our application
 int FAT_Directory(DirectoryProc directoryProc, u8* buffer, void* ref)
@@ -154,6 +162,7 @@ int FAT_Directory(DirectoryProc directoryProc, u8* buffer, void* ref)
 	}
 	return -1;
 }
+#endif
 
 typedef struct
 {

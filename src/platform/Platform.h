@@ -41,6 +41,7 @@ u8 MMC_Init();
 u8 MMC_ReadSector(u8* buffer, u32 sector);
 
 void quicksort(int arr[], int left, int right);
+#define bound(_x,_min,_max) ((_x) < (_min) ? (_min) : (((_x) > (_max)) ? (_max) : (_x)))
 
 #ifndef _WIN32
 #include <inttypes.h>
@@ -54,7 +55,6 @@ void quicksort(int arr[], int left, int right);
 #define CONST_PCHAR const prog_char*
 #define ROMSTRING(_s) extern const char _s[] PROGMEM
 
-#define bound(_x,_min,_max) ((_x) < (_min) ? (_min) : (((_x) > (_max)) ? (_max) : (_x)))
 
 class PStr
 {
@@ -71,7 +71,35 @@ public:
 };
 
 #else
-#include "stdafx.h"
+
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#include <stdlib.h>
+#include <stdarg.h>
+
+#define printf_P printf
+#define sprintf_P sprintf
+#define putchar SimConsole
+
+//	Catch printf,putchar in simulator
+void SimConsole(u8 c);
+
+#define printf SimPrintf
+class SimPrintf
+{
+public:
+	SimPrintf(const char* f, ...)
+	{
+		va_list va;
+		va_start(va, f);
+		char buf[1024];
+		_vsnprintf(buf,sizeof(buf)-1,f,va);
+		for (int i = 0; buf[i]; i++)
+			putchar(buf[i]);
+		va_end(va);
+	}
+};
+
 #define ROMSTRING(_s)
 #define PROGMEM 
 #define CONST_PCHAR const char *
@@ -85,6 +113,10 @@ typedef unsigned long uint32_t;
 #define strncpy_P strncpy
 #define strcpy_P strcpy
 #define PStr
+
+void _delay_ms(int ms);
+
+#define USE_WIN32_FS
 #endif
 
 

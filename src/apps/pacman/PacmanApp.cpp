@@ -336,6 +336,9 @@ class Playfield
     
    // bool _inited;
     byte* _dirty;
+
+	byte _ptx;
+	byte _pty;
     
 public:
     // Draw 2 bit BG into 8 bit icon tiles at bottom
@@ -669,8 +672,12 @@ public:
     {
         if (_state == ReadyState)
             return;
-        PacmanAI();
         Sprite* pacman = _sprites + PACMAN;
+
+		if (_ptx == 0xFF)
+			PacmanAI();
+		else
+			pacman->Target(_ptx,_pty);	// Send him somewhere
        
         //  Ghost AI
         bool scatter = _scIndex & 1;
@@ -975,6 +982,8 @@ public:
         const byte* s = _initSprites;
         for (int i = 0; i < 5; i++)
             _sprites[i].Init(s + i*5);
+
+		_ptx = 0xFF;	// pacman initial target defined by AI
        
         _scIndex = 0;
         _scTimer = 1;
@@ -1025,6 +1034,18 @@ public:
 			case Event::None:
 				Step();
 				break;
+			case Event::TouchDown:
+				if (e->Touch->y > 320)
+					return -1;
+			case Event::TouchMove:
+				_ptx = (e->Touch->x - (240-224)/2)/8;	// Target pacman while touching
+				_pty = (e->Touch->y - (320-288)/2)/8;
+				//printf("target %d %d\n",_ptx,_pty);
+				break;
+			case Event::TouchUp:
+				_ptx = 0xFF;	// Back to AI
+				break;
+
 			default:;
 		}
 		return 0;
