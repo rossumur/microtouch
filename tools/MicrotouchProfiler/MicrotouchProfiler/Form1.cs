@@ -251,5 +251,21 @@ namespace MicrotouchProfiler
             _profiler.Clear();
             Update();
         }
+
+        private void fIleToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void openMapFileToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            OpenFileDialog fd = new OpenFileDialog();
+            fd.Filter = "Map Files(*.map)|*.map|All files (*.*)|*.*";
+            if (fd.ShowDialog() != DialogResult.OK)
+                return;
+            Form2 pie = new Form2();
+            pie.SetMapFile(fd.FileName);
+            pie.Show();
+        }
     }
 }

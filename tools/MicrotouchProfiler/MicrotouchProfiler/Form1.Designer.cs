@@ -36,16 +36,18 @@
             this.timer1 = new System.Windows.Forms.Timer(this.components);
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
             this.listView1 = new System.Windows.Forms.ListView();
-            this.panel1 = new MicrotouchProfiler.PanelDB();
-            this.vScrollBar1 = new System.Windows.Forms.VScrollBar();
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
             this.toolStripStatusLabel1 = new System.Windows.Forms.ToolStripStatusLabel();
+            this.openMapFileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripMenuItem1 = new System.Windows.Forms.ToolStripSeparator();
+            this.panel1 = new MicrotouchProfiler.PanelDB();
+            this.vScrollBar1 = new System.Windows.Forms.VScrollBar();
             this.menuStrip1.SuspendLayout();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
             this.splitContainer1.SuspendLayout();
-            this.panel1.SuspendLayout();
             this.statusStrip1.SuspendLayout();
+            this.panel1.SuspendLayout();
             this.SuspendLayout();
             // 
             // menuStrip1
@@ -62,22 +64,25 @@
             // 
             this.fIleToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.openLssFileToolStripMenuItem,
-            this.clearSamplesToolStripMenuItem});
+            this.clearSamplesToolStripMenuItem,
+            this.toolStripMenuItem1,
+            this.openMapFileToolStripMenuItem});
             this.fIleToolStripMenuItem.Name = "fIleToolStripMenuItem";
             this.fIleToolStripMenuItem.Size = new System.Drawing.Size(37, 20);
             this.fIleToolStripMenuItem.Text = "File";
+            this.fIleToolStripMenuItem.Click += new System.EventHandler(this.fIleToolStripMenuItem_Click);
             // 
             // openLssFileToolStripMenuItem
             // 
             this.openLssFileToolStripMenuItem.Name = "openLssFileToolStripMenuItem";
-            this.openLssFileToolStripMenuItem.Size = new System.Drawing.Size(149, 22);
-            this.openLssFileToolStripMenuItem.Text = "Open lss File...";
+            this.openLssFileToolStripMenuItem.Size = new System.Drawing.Size(204, 22);
+            this.openLssFileToolStripMenuItem.Text = "Open lss file to profile...";
             this.openLssFileToolStripMenuItem.Click += new System.EventHandler(this.openLssFileToolStripMenuItem_Click);
             // 
             // clearSamplesToolStripMenuItem
             // 
             this.clearSamplesToolStripMenuItem.Name = "clearSamplesToolStripMenuItem";
-            this.clearSamplesToolStripMenuItem.Size = new System.Drawing.Size(149, 22);
+            this.clearSamplesToolStripMenuItem.Size = new System.Drawing.Size(204, 22);
             this.clearSamplesToolStripMenuItem.Text = "Clear Samples";
             this.clearSamplesToolStripMenuItem.Click += new System.EventHandler(this.clearSamplesToolStripMenuItem_Click);
             // 
@@ -119,6 +124,34 @@
             this.listView1.View = System.Windows.Forms.View.List;
             this.listView1.SelectedIndexChanged += new System.EventHandler(this.listView1_SelectedIndexChanged);
             // 
+            // statusStrip1
+            // 
+            this.statusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.toolStripStatusLabel1});
+            this.statusStrip1.Location = new System.Drawing.Point(0, 353);
+            this.statusStrip1.Name = "statusStrip1";
+            this.statusStrip1.Size = new System.Drawing.Size(664, 22);
+            this.statusStrip1.TabIndex = 3;
+            this.statusStrip1.Text = "statusStrip1";
+            // 
+            // toolStripStatusLabel1
+            // 
+            this.toolStripStatusLabel1.Name = "toolStripStatusLabel1";
+            this.toolStripStatusLabel1.Size = new System.Drawing.Size(69, 17);
+            this.toolStripStatusLabel1.Text = "Microtouch";
+            // 
+            // openMapFileToolStripMenuItem
+            // 
+            this.openMapFileToolStripMenuItem.Name = "openMapFileToolStripMenuItem";
+            this.openMapFileToolStripMenuItem.Size = new System.Drawing.Size(204, 22);
+            this.openMapFileToolStripMenuItem.Text = "Open map file piechart...";
+            this.openMapFileToolStripMenuItem.Click += new System.EventHandler(this.openMapFileToolStripMenuItem_Click);
+            // 
+            // toolStripMenuItem1
+            // 
+            this.toolStripMenuItem1.Name = "toolStripMenuItem1";
+            this.toolStripMenuItem1.Size = new System.Drawing.Size(201, 6);
+            // 
             // panel1
             // 
             this.panel1.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
@@ -138,22 +171,6 @@
             this.vScrollBar1.Size = new System.Drawing.Size(17, 324);
             this.vScrollBar1.TabIndex = 0;
             // 
-            // statusStrip1
-            // 
-            this.statusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.toolStripStatusLabel1});
-            this.statusStrip1.Location = new System.Drawing.Point(0, 353);
-            this.statusStrip1.Name = "statusStrip1";
-            this.statusStrip1.Size = new System.Drawing.Size(664, 22);
-            this.statusStrip1.TabIndex = 3;
-            this.statusStrip1.Text = "statusStrip1";
-            // 
-            // toolStripStatusLabel1
-            // 
-            this.toolStripStatusLabel1.Name = "toolStripStatusLabel1";
-            this.toolStripStatusLabel1.Size = new System.Drawing.Size(69, 17);
-            this.toolStripStatusLabel1.Text = "Microtouch";
-            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -170,9 +187,9 @@
             this.splitContainer1.Panel1.ResumeLayout(false);
             this.splitContainer1.Panel2.ResumeLayout(false);
             this.splitContainer1.ResumeLayout(false);
-            this.panel1.ResumeLayout(false);
             this.statusStrip1.ResumeLayout(false);
             this.statusStrip1.PerformLayout();
+            this.panel1.ResumeLayout(false);
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -191,6 +208,8 @@
         private System.Windows.Forms.ToolStripMenuItem clearSamplesToolStripMenuItem;
         private System.Windows.Forms.StatusStrip statusStrip1;
         private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabel1;
+        private System.Windows.Forms.ToolStripSeparator toolStripMenuItem1;
+        private System.Windows.Forms.ToolStripMenuItem openMapFileToolStripMenuItem;
     }
 }
 
