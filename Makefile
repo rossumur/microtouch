@@ -69,7 +69,7 @@ vpath %.cpp $(SRC_DIR)
 
 .PHONY: all checkdirs clean
 
-all: checkdirs $(TARGET) Microtouch.hex Microtouch.lss size
+all: checkdirs $(TARGET) Microtouch.hex Microtouch.lss FIRMWARE.BIN size
 
 -include $(DEP)
 
@@ -84,7 +84,8 @@ clean:
 	@rm -f *.elf
 	@rm -f *.lss
 	@rm -f *.map
-
+	@rm -f *.BIN
+	
 define make-goal
 $1/%.o: %.cpp
 	$(CC) $(INCLUDES) $(CFLAGS) -c $$< -MD -o $$@
@@ -97,6 +98,9 @@ $(TARGET): $(OBJ)
 
 %.hex: $(TARGET)
 	avr-objcopy -O ihex $(HEX_FLASH_FLAGS)  $< $@
+
+FIRMWARE.BIN: $(TARGET)
+	avr-objcopy -O binary $< $@
 
 %.lss: $(TARGET)
 	avr-objdump -h -S $< > $@

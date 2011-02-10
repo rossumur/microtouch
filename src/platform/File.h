@@ -18,7 +18,7 @@
 #ifndef __FILE_H__
 #define __FILE_H__
 
-#include "fat32.h"
+#include "Fat32.h"
 
 class File
 {

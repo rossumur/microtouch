@@ -51,7 +51,7 @@ namespace MicrotouchProfiler
             {
                
                 string description = (string)obj["Description"];
-                if (description.StartsWith("Microtouch"))
+                if (description != null && description.StartsWith("Microtouch"))
                 {
                     string name = (string)obj["Name"];
                     string[] names = name.Split();
