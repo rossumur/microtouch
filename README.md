@@ -11,7 +11,11 @@ are bounded only by your imagination (and the 8 bit cpu + 2.5k of RAM).
 ## Getting Started
 
 * Buy the hardware from the lovely folks at Adafruit (or diy if brave)
-* Install WinAVR (a more detailed description *here*)
+* Install WinAVR ([a more detailed description here](http://winavr.sourceforge.net/install_config_WinAVR.pdf))
+* For linux users install the avr tool chain with
+
+		sudo apt-get install gcc-avr binutils-avr avr-libc
+		
 * Build default applications, download hex file and verify everything is ok
 * Build you own app
 
