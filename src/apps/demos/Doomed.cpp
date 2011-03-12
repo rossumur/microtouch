@@ -267,8 +267,8 @@ class DoomState
         {           
             long duu = RECIP(abs(u));
             long dvv = RECIP(abs(v));
-            char stepx = (u < 0) ? -1 : 1;
-            char stepy = (v < 0) ? -8 : 8;
+            signed char stepx = (u < 0) ? -1 : 1;
+            signed char stepy = (v < 0) ? -8 : 8;
 
             // Initial position
             u8 mapx = _playerPosX >> 8;

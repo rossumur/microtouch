@@ -69,7 +69,7 @@ public:
 		S(x,y+1);
 	}
 
-	int ToDot(int x, int y)
+	signed char ToDot(int x, int y)
 	{
 		x -= LEFT;
 		if (x < 0)

@@ -308,15 +308,10 @@ bool USBConnected()
 	return true;
 }
 
+int SimGetChar();
 int USBGetChar()
 {
-	if (!_getchar.empty())
-	{
-		int c = _getchar.front();
-		 _getchar.pop_front();
-		 return c;
-	}
-	return -1;
+	return SimGetChar();
 }
 
 void Hardware_::PowerOff()
@@ -369,12 +364,6 @@ DWORD WINAPI ThreadProc(LPVOID lpParameter)
 	}
 }
 
-void USBPutChar(u8 c);
-static int usb_putchar(char c, FILE *stream)
-{
-	return 0;
-}
-
 void SimInit(HWND hWnd)
 {
 	memset(_screen,0xAA,sizeof(_screen));
@@ -396,9 +385,4 @@ void SimTimer(HWND hWnd)
 {
 	if (_screenDirty)
 		::InvalidateRect(hWnd,&_simBounds,0);
-}
-
-void SimChar(int c)
-{
-	_getchar.push_back(c);
 }

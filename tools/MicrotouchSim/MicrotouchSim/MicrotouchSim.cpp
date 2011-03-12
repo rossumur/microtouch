@@ -3,7 +3,14 @@
 
 #include "stdafx.h"
 #include "MicrotouchSim.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <fcntl.h>
+#include <io.h>
 
+#include <iostream>
+#include <fstream>
+using namespace std;
 
 void SimInit(HWND hWnd);
 void SimTimer(HWND hWnd);
@@ -16,8 +23,6 @@ extern int _mousey;
 extern int _mousepressure;
 
 HWND _console = 0;
-HWND _textEdit = 0;
-WNDPROC _textProc;
 
 #define MAX_LOADSTRING 100
 
@@ -31,7 +36,6 @@ ATOM				MyRegisterClass(HINSTANCE hInstance);
 BOOL				InitInstance(HINSTANCE, int);
 LRESULT CALLBACK	WndProc(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK	About(HWND, UINT, WPARAM, LPARAM);
-INT_PTR CALLBACK	Console(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK	EditProc(HWND, UINT, WPARAM, LPARAM);
 
 int APIENTRY _tWinMain(HINSTANCE hInstance,
@@ -118,6 +122,59 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
 //        In this function, we save the instance handle in a global variable and
 //        create and display the main program window.
 //
+
+void InitConsole()
+{
+	if (_console)
+		return;
+
+	int hCrt, i;
+	FILE *hf;
+
+	AllocConsole();
+	COORD s = { 10,40 };
+
+	// redirect unbuffered STDOUT to the console
+	hCrt = _open_osfhandle((long)GetStdHandle(STD_OUTPUT_HANDLE), _O_TEXT);
+	hf = _fdopen( hCrt, "w" );
+	*stdout = *hf;
+	i = setvbuf( stdout, NULL, _IONBF, 0 ); 
+
+	// redirect unbuffered STDIN to the console
+	hCrt = _open_osfhandle((long)GetStdHandle(STD_INPUT_HANDLE), _O_TEXT);
+	hf = _fdopen( hCrt, "r" );
+	*stdin = *hf;
+	setvbuf( stdin, NULL, _IONBF, 0 );
+
+	DWORD mode;
+	GetConsoleMode(GetStdHandle(STD_INPUT_HANDLE),&mode);
+	mode &= ~ENABLE_LINE_INPUT;
+	SetConsoleMode(GetStdHandle(STD_INPUT_HANDLE),mode);
+
+	_console = GetConsoleWindow();
+	::SetWindowText(_console,"Console");
+	::SetWindowPos(_console,0,400,80,800,600,0);
+
+	ios::sync_with_stdio();
+}
+
+int SimGetChar()
+{
+	INPUT_RECORD pir[16];
+	DWORD dwRead = 16;
+	if (PeekConsoleInput(GetStdHandle(STD_INPUT_HANDLE), pir, dwRead, &dwRead))
+	{
+		int count = dwRead;
+		while (count--)
+		{
+			ReadConsoleInput(GetStdHandle(STD_INPUT_HANDLE), pir, 1, &dwRead);
+			if ((KEY_EVENT == pir[0].EventType) && (pir[0].Event.KeyEvent.bKeyDown))
+				return pir[0].Event.KeyEvent.uChar.AsciiChar;
+		}
+	}
+	return -1;
+}
+
 BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 {
    HWND hWnd;
@@ -128,28 +185,18 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
       CW_USEDEFAULT, CW_USEDEFAULT, 240 + 48, 320 + 96, NULL, NULL, hInstance, NULL);
 
    if (!hWnd)
-   {
       return FALSE;
-   }
-   SimInit(hWnd);
 
-   ShowWindow(hWnd, nCmdShow);
-   UpdateWindow(hWnd);
+	SimInit(hWnd);
+	ShowWindow(hWnd, nCmdShow);
+	UpdateWindow(hWnd);
 
-	// create console but don't show it yet
-	_console = CreateDialog(GetModuleHandle(NULL), MAKEINTRESOURCE(IDD_CONSOLE), hWnd, Console);
-	_textEdit = GetDlgItem(_console,IDC_EDIT1);
-	_textProc = (WNDPROC)SetWindowLong(_textEdit, GWL_WNDPROC, (LONG)EditProc);
-
-   return TRUE;
+	return TRUE;
 }
 
 void SimConsole(unsigned char c)
 {
-	int ndx = GetWindowTextLength (_textEdit);
-	SetFocus (_textEdit);
-    SendMessage (_textEdit, EM_SETSEL, (WPARAM)ndx, (LPARAM)ndx);
-	SendMessage (_textEdit, EM_REPLACESEL, 0, (LPARAM) ((LPSTR) &c));
+	printf("%c",c);
 }
 
 //
@@ -181,7 +228,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			break;
 
 		case IDM_CONSOLE:
-			ShowWindow(_console, SW_SHOW);
+			InitConsole();
+			::ShowWindow(_console, SW_SHOW);
   			break;
 
 		case IDM_EXIT:
@@ -248,40 +296,3 @@ INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 	return (INT_PTR)FALSE;
 }
 
-
-// Message handler for a console
-INT_PTR CALLBACK Console(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
-{
-	UNREFERENCED_PARAMETER(lParam);
-	switch (message)
-	{
-	case WM_INITDIALOG:
-		return (INT_PTR)TRUE;
-
-	case WM_COMMAND:
-		if (LOWORD(wParam) == IDOK || LOWORD(wParam) == IDCANCEL)
-		{
-			::ShowWindow(hDlg,0);
-			return (INT_PTR)TRUE;
-		}
-		if (LOWORD(wParam) == IDC_CLEAR_CONSOLE)
-		{
-			::SetWindowText(_textEdit,"");
-			return (INT_PTR)TRUE;
-		}
-		break;
-
-	case WM_KEYDOWN:
-		SimChar(LOWORD(wParam));
-		break;
-	}
-	return (INT_PTR)FALSE;
-}
-
-// Message handler for text
-INT_PTR CALLBACK EditProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
-{
-	if (message == WM_CHAR)
-		SimChar(LOWORD(wParam));
-	return _textProc(hDlg,message,wParam,lParam);
-}

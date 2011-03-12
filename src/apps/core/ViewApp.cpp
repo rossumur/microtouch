@@ -113,7 +113,7 @@ public:
 					}
 
 					// Init scroller, do initial draw
-					_scroller.Init(_height,OnDraw,this,Scroller::PageScroll);
+					_scroller.Init(_height,OnDraw,this,320);
 				}
 				break;
 

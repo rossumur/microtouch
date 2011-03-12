@@ -46,7 +46,7 @@
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
-				UsePrecompiledHeader="2"
+				UsePrecompiledHeader="0"
 				WarningLevel="3"
 				DebugInformationFormat="4"
 			/>
@@ -115,7 +115,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
-				AdditionalIncludeDirectories="..\..\..\src\platform;..\..\..\src\hardware"
+				AdditionalIncludeDirectories="..\..\..\src\lwip\include;..\..\..\src\platform;..\..\..\src\hardware"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
@@ -514,6 +514,14 @@
 							>
 						</File>
 					</Filter>
+					<Filter
+						Name="wiki"
+						>
+						<File
+							RelativePath="..\..\..\src\apps\wiki\WikiApp.cpp"
+							>
+						</File>
+					</Filter>
 				</Filter>
 				<Filter
 					Name="hardware"
@@ -530,6 +538,10 @@
 						RelativePath="..\..\..\src\hardware\mmc.h"
 						>
 					</File>
+				</Filter>
+				<Filter
+					Name="include"
+					>
 				</Filter>
 			</Filter>
 		</Filter>

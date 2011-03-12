@@ -43,20 +43,20 @@ void FillScrollBG(int y, int height, int t)
     {
         short c = abs(t-y);
         c = min(7,c);
-        Graphics.Rectangle(0,Mod320(y++),240,1,pgm_read_word(_greys+c));
+		Graphics.Rectangle(0,Mod320(y++),240,1,pgm_read_word(_greys+c));
     }
 }
 
 //  Encapsulate fancy scrolling
-void Scroller::Init(long height, ScrollDrawProc drawProc, void* ref, ScrollMode mode)
+void Scroller::Init(long height, ScrollDrawProc drawProc, void* ref, int pageSize)
 {
 	_drawProc = drawProc;
 	_ref = ref;
 
     _velocity = 0;
-    _scrollMode = mode;
     _scroll = 0;
     _scrollHeight = height;
+	_pageSize = pageSize;
     Graphics.Scroll(0);
 	if (height > 0)
 		_drawProc(0,0,min(320,height),_ref);
@@ -65,6 +65,24 @@ void Scroller::Init(long height, ScrollDrawProc drawProc, void* ref, ScrollMode 
 void Scroller::Clear(int color)
 {
 	Graphics.Clear(color);
+}
+
+void Scroller::SetHeight(long height)
+{
+	if (height == _scrollHeight)
+		return;
+	int delta = height - _scrollHeight;
+	_scrollHeight = height;
+
+	if (delta > 0)
+	{
+		int top = _scrollHeight-delta;
+		if (_scrollHeight < 320)
+			delta = 320-top;
+		Invalidate(top,delta);	// Draw new area
+	}
+	else
+		Invalidate(_scrollHeight,-delta);		// Erase exposed area
 }
 
 int Scroller::OnEvent(Event* e)
@@ -101,8 +119,11 @@ int Scroller::OnEvent(Event* e)
 	return 0;
 }
 
-void Scroller::Invalidate(int src, int lines)
+void Scroller::Invalidate(long src, int lines)
 {
+	if ((src + _scroll >= 320) || (src + _scroll + lines < 0))
+		return;
+
     // Scroll first
     Graphics.Scroll(-_scroll);
     
@@ -110,35 +131,42 @@ void Scroller::Invalidate(int src, int lines)
     if (src < 0)
     {
         int c = min(lines,_scroll);
-        FillScrollBG(src,c,-1);
+		FillScrollBG(src,c,-1);
         src += c;
         lines -= c;
     }
         
-    //  Skip drawing the image for now
-    short imgY = src;
     short imgLines = min(_scrollHeight-src,lines);
     if (imgLines > 0)
     {
+		DrawBody(src,imgLines);
         src += imgLines;
         lines -= imgLines;
     }
                     
     //  Draw whitespace after image
-    if (lines > 0)
+	if (lines > 0)
         FillScrollBG(src,lines,_scrollHeight);
-        
-    // Now Draw Image
-	while (imgLines > 0)
-	{
-		int y = Mod320(imgY);
-		int height = min(imgLines,320-y);
-		_drawProc(imgY,y,height,_ref);
-		imgY += height;
-		imgLines -= height;
-	}
 }
 
+//
+void Scroller::DrawBody(int y, int height)
+{
+	int py = y+_scroll;
+	if (py >= 320 || py + height <= 0)
+		return;
+	int top = Mod320(y);
+    int bottom = top + height;
+    if (bottom > 320)	 // Wrap across screen bounds from bottom to top
+    {
+        int h1 = bottom-320;
+        int h0 = height-h1;
+        DrawBody(y,h0);		// Draw in two slices as this crosses physical bounds of the screen
+        DrawBody(y+h0,h1);
+        return;
+    }
+	_drawProc(y,top,height,_ref);
+}
 //  
 void Scroller::ScrollBy(int delta)
 {
@@ -163,19 +191,24 @@ inline short round(short x, short f)
     return x/f;
 }
 
+//	Different page sizes
 int Scroller::Acceleration()
 {
 	int a = 0;  // acceleration
-    if (_scrollMode == PageScroll)
+    if (_pageSize)
     {
-        int scrollTarget = ((_scroll - 160)/320)*320;
-        scrollTarget = max(-_scrollHeight + 320,scrollTarget);   
+        int scrollTarget = ((_scroll - (_pageSize>>1))/_pageSize)*_pageSize;
+        scrollTarget = max(-_scrollHeight + 320,scrollTarget);  
+		if (_scrollHeight < 320)
+			scrollTarget = 0;
         a = scrollTarget - _scroll;
      } else {
 		if (_scroll > 0)
 			a = -_scroll;
 		else {
 			int minScroll = -_scrollHeight + 320;
+			if (_scrollHeight < 320)
+				minScroll = 0;
 			if (_scroll < minScroll)
 				a = minScroll - _scroll;
 		}

@@ -343,10 +343,14 @@ void Graphics_::DrawImage(File& f, int x, int y, int scroll, int lines)
     if (!f.Read(&hdr,sizeof(Img2)) || !cmp(hdr.sig,"img2"))
         return;
     
+	//	Palettes are bad news on small machines
+	//	Removing and replacing with new runlength format
+
     //  Load palette
-    byte palette[512];    
+   // byte palette[512];    
     int paletteLen = (hdr.colors*2 + 3) & ~3;
-    f.Read(palette+2,paletteLen);   // Align to 4
+	f.Skip(paletteLen);   // Align to 4
+    //f.Read(palette+2,paletteLen);   // Align to 4
     
     int width = hdr.width;
     if (lines == 0)
@@ -389,121 +393,9 @@ void Graphics_::DrawImage(File& f, int x, int y, int scroll, int lines)
             y++;
         }
         return;
-    }
-    
-    //  Run length compressed
-  //  int left = x; // TODO YUCK
-	int miny = y;
-	y -= scroll;
-    long lastPos = 0;
-    while (y < maxy)
-    {
-		bool clip = y < miny;
+	}
 
-        //  Repeat line?
-        byte repeat = 1;
-        long pos = f.GetPos();
-        lastPos = pos;
-        if (f.ReadByte() == 0xFF)
-        {
-            repeat = f.ReadByte();
-            pos += 2;
-			repeat = min(repeat,maxy-y);	// TODO BUG
-        }
-        
-        //  decode a line
-        while (repeat--)
-        {
-            y++;
-            f.SetPos(pos);  // Encoder prevents backing up to previous sector
-            x = 0;
-            while (x < width)
-            {
-                int n = f.ReadByte();
-                bool ex = (n & 0x80) != 0;
-                n &= 0x7F;
-
-                if (n > 120)
-                {
-                    if (n == 126)   // skip
-                    {
-                        x += f.ReadByte();
-						if (!clip)
-						{
-#if 0
-							TODO BUGBUG
-							if (x == width)
-								LCDSetGRAM(left,y);
-							else
-								LCDSetGRAM(left+x,y-1);
-#endif
-						}
-                        continue;
-                    }
-                    n = ((n-121) << 8) | f.ReadByte();
-                }
-                x += n;
-                
-                if (x > width)
-                {
-                    for (;;)
-                    {
-                    }
-                }
-                
-                int count;
-                if (ex)
-                {
-                    // explicit
-                    if (format == 8)
-                    {
-                        while (n)
-                        {
-                            const byte* b = f.GetBuffer(&count);
-                            count = min(count,n);
-							if (!clip)
-								LCD.BlitIndexed(b,palette,count);
-                            f.Skip(count);  // Always works within buffer
-                            n -= count;
-                        }
-                    }
-                    else
-                    {
-                        while (n)
-                        {
-                            const byte* b = f.GetBuffer(&count);
-                            if (count == 1)
-                            {   
-                                int color = (f.ReadByte() << 8) | f.ReadByte();  // Wrap around
-								if (!clip)
-									LCD.Fill(color,1);
-                            } else {
-                                count >>= 1;
-                                count = min(count,n);
-								if (!clip)
-									LCD.Blit(b,count);
-                                f.Skip(count<<1);
-                            }
-                            n -= count;
-                        }
-                    }
-                } else {
-                //  run
-                    byte a = f.ReadByte();
-                    byte b;
-                    if (format == 8)
-                    {
-                        b = palette[a*2+1];
-                        a = palette[a*2];
-                    }
-                    else
-                        b = f.ReadByte(); 
-					if (!clip)
-						LCD.Fill((a << 8) | b,n);
-                }
-            }
-        }
-    }
+	//	Other format deprecated because it was silly
 }
 
 u16 Graphics_::ToColor(u8 r, u8 g, u8 b)

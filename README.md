@@ -183,6 +183,12 @@ Fingerpainting with touchscreen. Press harder for a bigger brush, select one of 
 * Cycle Luminance
 * Color from accelerometer XYZ
 
+### Wiki
+
+A prototype wikipedia reader. Uses a prebuilt file based on the simple english corpus.
+Load the "wiki.blb" (tools/MicrotouchSim/MicrotouchSim/microSD) file onto a microSD card,
+follow instructions in makefile to build the demo.
+
 ## Tools
 
 ### Microtouch Tool

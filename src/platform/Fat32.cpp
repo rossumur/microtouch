@@ -295,6 +295,7 @@ bool FAT_Read(u8* buffer, u32 sector, ExtentInfo* extent)
 			return MMC_ReadSector(buffer,sector);
 		}
 		sector -= s;
+		i++;
 	}
 	return false;	// TODO: Deal with nasty fragmentation
 }

@@ -51,12 +51,18 @@ HEX_EEPROM_FLAGS += --change-section-lma .eeprom=0 --no-change-warnings
 LINKONLYOBJECTS = 
 
 ## Define application folders here
-##APPLICATIONS := apps/hardware
+## APPLICATIONS := apps/hardware
 APPLICATIONS := apps/demos
-##APPLICATIONS := apps/pacman
-##APPLICATIONS := apps/3D
+## APPLICATIONS := apps/pacman
+## APPLICATIONS := apps/3D
 
 MODULES   := $(APPLICATIONS) apps/core platform hardware
+
+## Wikipedia Demo
+## Copy the data file onto a microSD card: tools/MicrotouchSim/MicrotouchSim/microSD/wiki.blb
+## Uncomment the following line to build the Wikipedia test
+## MODULES   := apps/wiki platform hardware
+
 SRC_DIR   := $(addprefix src/,$(MODULES))
 BUILD_DIR := $(addprefix build/,$(MODULES))
 
