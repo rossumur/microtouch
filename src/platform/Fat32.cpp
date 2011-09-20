@@ -282,22 +282,38 @@ bool FAT_Open(const char* path, ExtentInfo* extent, u8* buffer)
 
 //	TODO: read beyond 3 extent!
 //	TODO: Store extents as absolute sectors rather than clusters, avoid muls
-bool FAT_Read(u8* buffer, u32 sector, ExtentInfo* extent)
+
+bool FAT_FindSector(u32* sector, ExtentInfo* extent)
 {
 	u8 i = 0;
 	while (i < 3)
 	{
 		u32 s = extent->extents[i].count*_fat.sectorsPerCluster;
-		if (sector < s)
+		if (*sector < s)
 		{
 			u32 cluster = extent->extents[i].start;
-			sector += _fat.clusterStart + (cluster - 2)*_fat.sectorsPerCluster;
-			return MMC_ReadSector(buffer,sector);
+			*sector += _fat.clusterStart + (cluster - 2)*_fat.sectorsPerCluster;
+			return true;
 		}
-		sector -= s;
+		*sector -= s;
 		i++;
 	}
-	return false;	// TODO: Deal with nasty fragmentation
+	// TODO: Deal with nasty fragmentation
+	return false;
+}
+
+bool FAT_Read(u8* buffer, u32 sector, ExtentInfo* extent)
+{
+	if (!FAT_FindSector(&sector,extent))
+		return false;
+	return MMC_ReadSector(buffer,sector) == 0;
+}
+
+bool FAT_Write(u8* buffer, u32 sector, ExtentInfo* extent)
+{
+	if (!FAT_FindSector(&sector,extent))
+		return false;
+	return MMC_WriteSector(buffer,sector) == 0;
 }
 
 //	helper to convert fatname in DirectoryEntry to string

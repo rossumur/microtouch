@@ -23,6 +23,16 @@
 #include "Board.h"
 #include "mmc.h"
 
+#ifdef DISABLE_USB
+#define USBConnected() 0
+#define USBInit()
+#define USBPutChar(_c)
+#else
+u8 USBConnected();
+void USBInit();
+void USBPutChar(u8 c);
+#endif
+
 //================================================================
 //================================================================
 //	Backlight
@@ -81,6 +91,7 @@ void Hardware_::SetBacklight(u8 level, int ms)
 //================================================================
 //  Sampling profiler
 
+#ifndef DISABLE_PROFILER
 ROMSTRING(S_profprint);
 const char S_profprint[] = "%04X\n";
 void Sample(u8* stack)
@@ -90,6 +101,7 @@ void Sample(u8* stack)
     u8 lo = b[1]; 
 	printf_P(S_profprint,(((u16)hi << 8) | lo)<<1);
 }
+#endif
 
 //================================================================
 //================================================================
@@ -100,16 +112,17 @@ u16 _perfhi = 0;
 u16 _perf = 0;
 u16 _powerOffCount;
 
-u8 USBConnected();
 #define POWER_OFF_COUNT ((int)(5*60*30.5))	// 5 minutes
 
 ISR(TIMER1_OVF_vect)	// (clk div 8)/65536 ~30.5hz
 {
+#ifndef DISABLE_PROFILER
 	if (_sampler)
 	{
 		u8 mark = 0x69;
 		Sample(&mark);
 	}
+#endif
 
     if (++_perf == 0)	// rollover perf counter every 35 minutes or so
       ++_perfhi;
@@ -539,8 +552,6 @@ u8 Hardware_::GetTouch(TouchData* e)
 }
 
 
-void USBInit();
-void USBPutChar(u8 c);
 static int usb_putchar(char c, FILE *stream)
 {
 	USBPutChar(c);
@@ -575,7 +586,9 @@ void Hardware_::Init()
 	sei();
 
 	// Attach stdout to usb serial
+#ifndef DISABLE_USB
 	StdOutInit();
+#endif
 }
 
 Hardware_ Hardware;

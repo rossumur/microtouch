@@ -104,8 +104,17 @@ Stdout is connected to the USB serial port so feel free to use printf for debugg
 ## Applications
 
 There are a number of example applications that exercise various parts of system. They don't all fit 
-in the device at the same time. The `APPLICATIONS` path in the Makefile defines which apps get built
-into the firmware.
+in the device at the same time. The `MODULES` path in the Makefile defines which apps get built
+into the firmware. There are a number of predefined make targets in the Makefile:
+	
+		make
+		make demo
+		make 3d
+		make pacman
+		make hardware
+		make wiki
+		make zork
+		make zorkcleartype
 
 ### Shell
 
@@ -188,6 +197,23 @@ Fingerpainting with touchscreen. Press harder for a bigger brush, select one of 
 A prototype wikipedia reader. Uses a prebuilt file based on the simple english corpus.
 Load the "wiki.blb" (tools/MicrotouchSim/MicrotouchSim/microSD) file onto a microSD card,
 follow instructions in makefile to build the demo.
+
+### Zork/Frotz - A Z-machine interpreter for microtouch
+
+The Z-machine was created in 1979 to play large (100k!) adventure games on small (8K!) personal computers.
+Long before the Java the implementors at Infocom built a virtual machine capable of paging,
+loading and saving complete runtime state that ran on a wide variety of CPUs.
+Pretty sophisticated stuff for microcomputers 30 years ago.
+
+Infocom published the most enduring works of interactive fiction; if you have not played one of
+these beginning to end you are really missing one of the great joys of computer gaming.
+The code is based on a cut down version of frotz, the gold standard for z-machine interpreters.
+
+A page file on the microSD card ("p.pge") acts as its backing store. By default the app loads
+"game.z5" game but will play most non v6 games: just change their name and copy to the microSD.
+
+There is a version of the interpreter that uses a nice anti aliased font - at 31k it is too big
+to load with the bootloader but ISP owners can give it a try (make zorkcleartype)
 
 ## Tools
 

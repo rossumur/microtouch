@@ -36,8 +36,10 @@ byte SPI_ReceiveByte(byte b);
 #define MMC_NOT_INITED 105
 #define READ_FAILED 106
 #define BAD_PATTERN 107
+#define WRITE_FAILED 108
 
 byte MMC_Init();
 byte MMC_ReadSector(byte *buffer, uint32_t sector);
+byte MMC_WriteSector(byte *buffer, uint32_t sector);
 
 #endif // __MMC_H__

@@ -33,4 +33,6 @@ public:
 };
 
 //	Register the application, start getting events on OnEvent method
+#ifndef SIMULATOR
 INSTALL_APP(off,OffState);
+#endif

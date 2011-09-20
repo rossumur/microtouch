@@ -515,6 +515,70 @@
 						</File>
 					</Filter>
 					<Filter
+						Name="frotz"
+						>
+						<File
+							RelativePath="..\..\..\src\apps\frotz\FrotzApp.cpp"
+							>
+						</File>
+						<File
+							RelativePath="..\..\..\src\apps\frotz\FrotzCache.cpp"
+							>
+						</File>
+						<Filter
+							Name="dumb-frotz"
+							>
+							<File
+								RelativePath="..\..\..\src\apps\frotz\dumb-frotz-2.32r1\fastmem.c"
+								>
+							</File>
+							<File
+								RelativePath="..\..\..\src\apps\frotz\dumb-frotz-2.32r1\frotz.h"
+								>
+							</File>
+							<File
+								RelativePath="..\..\..\src\apps\frotz\dumb-frotz-2.32r1\input.c"
+								>
+							</File>
+							<File
+								RelativePath="..\..\..\src\apps\frotz\dumb-frotz-2.32r1\main.c"
+								>
+							</File>
+							<File
+								RelativePath="..\..\..\src\apps\frotz\dumb-frotz-2.32r1\math.c"
+								>
+							</File>
+							<File
+								RelativePath="..\..\..\src\apps\frotz\dumb-frotz-2.32r1\object.c"
+								>
+							</File>
+							<File
+								RelativePath="..\..\..\src\apps\frotz\dumb-frotz-2.32r1\process.c"
+								>
+							</File>
+							<File
+								RelativePath="..\..\..\src\apps\frotz\dumb-frotz-2.32r1\random.c"
+								>
+							</File>
+							<File
+								RelativePath="..\..\..\src\apps\frotz\dumb-frotz-2.32r1\screen.c"
+								>
+							</File>
+							<File
+								RelativePath="..\..\..\src\apps\frotz\dumb-frotz-2.32r1\table.c"
+								>
+							</File>
+							<File
+								RelativePath="..\..\..\src\apps\frotz\dumb-frotz-2.32r1\text.c"
+								>
+							</File>
+							<File
+								RelativePath="..\..\..\src\apps\frotz\dumb-frotz-2.32r1\variable.c"
+								>
+							</File>
+						</Filter>
+					</Filter>
+					<Filter
 						Name="wiki"
 						>
 						<File

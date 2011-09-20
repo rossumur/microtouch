@@ -53,6 +53,7 @@ u8		FAT_Init(u8* buffer, ReadProc readProc);
 
 bool	FAT_Open(const char* path, ExtentInfo* extent, u8* buffer);
 bool	FAT_Read(u8* buffer, u32 sector, ExtentInfo* extent);
+bool	FAT_Write(u8* buffer, u32 sector, ExtentInfo* extent);
 int		FAT_Directory(DirectoryProc directoryProc, u8* buffer, void* ref);
 const char* FAT_Name(char* name, DirectoryEntry* entry);
 

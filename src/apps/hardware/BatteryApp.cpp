@@ -121,4 +121,6 @@ public:
 };
 
 //	Application definition
+#ifndef SIMULATOR
 INSTALL_APP(battery,BatteryState);
+#endif

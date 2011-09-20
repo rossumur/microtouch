@@ -7,7 +7,7 @@ class Scroller
 public:
 
 protected:
-    short _scroll;			//todo will need to be long for >100 pages
+    long _scroll;			//todo will need to be long for >100 pages
     short _scrollHeight;
     short _dragy;
     short _velocity;

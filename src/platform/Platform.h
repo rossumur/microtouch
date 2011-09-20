@@ -23,6 +23,12 @@
 
 #define MAX_APP_BUFFER 768
 
+// Draconian measures to fit large apps (like frotz etc)
+#ifdef MIN_FLASH_SIZE
+#define DISABLE_USB
+#define DISABLE_PROFILER
+#endif
+
 #ifndef byte
 typedef unsigned char byte;
 typedef unsigned short ushort;
@@ -39,6 +45,7 @@ typedef unsigned long u32;
 
 u8 MMC_Init();
 u8 MMC_ReadSector(u8* buffer, u32 sector);
+u8 MMC_WriteSector(u8* buffer, u32 sector);
 
 void quicksort(int arr[], int left, int right);
 #define bound(_x,_min,_max) ((_x) < (_min) ? (_min) : (((_x) > (_max)) ? (_max) : (_x)))
@@ -72,6 +79,8 @@ public:
 
 #else
 
+#define SIMULATOR
+
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <stdlib.h>
@@ -79,26 +88,6 @@ public:
 
 #define printf_P printf
 #define sprintf_P sprintf
-#define putchar SimConsole
-
-//	Catch printf,putchar in simulator
-void SimConsole(u8 c);
-
-#define printf SimPrintf
-class SimPrintf
-{
-public:
-	SimPrintf(const char* f, ...)
-	{
-		va_list va;
-		va_start(va, f);
-		char buf[1024];
-		_vsnprintf(buf,sizeof(buf)-1,f,va);
-		for (int i = 0; buf[i]; i++)
-			putchar(buf[i]);
-		va_end(va);
-	}
-};
 
 #define ROMSTRING(_s)
 #define PROGMEM 
@@ -109,6 +98,7 @@ typedef unsigned long uint32_t;
 #define pgm_read_byte(_x) (*(_x))
 #define pgm_read_word(_x) (*((short*)(_x)))
 //#define USE_WIN32_FS
+#define memcpy_P memcpy
 #define strcmp_P strcmp
 #define strncpy_P strncpy
 #define strcpy_P strcpy
@@ -129,9 +119,11 @@ u32 RandomBits(u8 bits);
 void delay(ushort ms);
 void assertFailed(const char* str, int len);
 
-//#define ASSERT(_x) if (!(_x)) assertFailed(__FILE__,__LINE__);
+#ifdef MIN_FLASH_SIZE
+#define ASSERT(_x)
+#else
 #define ASSERT(_x) if (!(_x)) assertFailed(NULL,__LINE__);
-
+#endif
 
 class TouchData
 {
@@ -183,11 +175,18 @@ typedef int (*AppProc)(Event* e, void* appState);
 //	_n is the human readable name of the application
 //	_s is an object with a OnEvent method
 
-#define INSTALL_APP(_n,_s) \
+#define _INSTALL_APP(_n,_s) \
 	ROMSTRING(S_##_n); \
 	const char S_##_n[] = #_n; \
 	int proc_##_n(Event* e, void* s) {return ((_s*)s)->OnEvent(e);} \
 	RegisterApp app_##_n(S_##_n,(AppProc)proc_##_n,sizeof(_s))
+
+// Single Application replaces shell
+#ifdef NO_SHELL
+#define INSTALL_APP(_n,_s) _INSTALL_APP(shell,_s)
+#else
+#define INSTALL_APP(_n,_s) _INSTALL_APP(_n,_s)
+#endif
 
 //	Auto register the app with the Shell, will be called before Shell_Init
 class RegisterApp

@@ -19,6 +19,8 @@
 #include "Platform.h"
 #include "USBCDCDesc.h"
 
+#ifndef DISABLE_USB
+
 //==================================================================
 //==================================================================
 //	Mini CDC Serial
@@ -412,3 +414,5 @@ ISR(USB_COM_vect)
 	}
 	Stall();
 }
+
+#endif

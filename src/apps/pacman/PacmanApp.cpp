@@ -1053,4 +1053,5 @@ public:
 };
 
 //	Register the application, start getting events on OnEvent method
+
 INSTALL_APP(pacman,Playfield);

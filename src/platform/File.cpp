@@ -24,6 +24,8 @@ File::File()
 
 File::~File()
 {
+	if (_dirty)
+		Flush();
 #ifdef USE_WIN32_FS
 	CloseHandle(_h);
 #endif
@@ -34,6 +36,7 @@ void File::Init()
     _mark = 512;
     _extent.fileLength = 0;
     _sector = -1;
+	_dirty = 0;
 #ifdef USE_WIN32_FS
 	_h = INVALID_HANDLE_VALUE;
 #endif
@@ -47,8 +50,8 @@ byte File::Open(const char* path)
     if (_h != INVALID_HANDLE_VALUE)
         ::CloseHandle(_h);
     _h = ::CreateFileA(s,
-            GENERIC_READ,
-            FILE_SHARE_READ,
+            GENERIC_READ | GENERIC_WRITE,
+            0,
             NULL,
             OPEN_EXISTING,
             FILE_ATTRIBUTE_NORMAL,
@@ -93,6 +96,26 @@ int File::Read(void* d, int len)
     return len;
 }
 
+void File::WriteByte(byte b)
+{
+    if (_mark == 512)
+        Load(_sector + 1);
+	if (b != _buffer[_mark])
+	{
+		_dirty = 1;
+		_buffer[_mark] = b;
+	}
+	_mark++;
+}
+
+int File::Write(const void* d, int len)
+{
+    const byte* src = (byte*)d;
+    for (int i = 0; i < len; i++)
+		WriteByte(src[i]);
+    return len;
+}
+
 const byte* File::GetBuffer(int* count)
 {
     if (_mark == 512)
@@ -112,14 +135,30 @@ void File::Skip(int count)
     ASSERT(_mark >= 0 && _mark <= 0x200);
 }
 
+void File::Flush()
+{
+#ifdef USE_WIN32_FS
+	printf("w%d ",_sector);
+	DWORD r;
+	::SetFilePointer(_h,_sector*512,0,0);
+	::WriteFile(_h,_buffer,512,&r,NULL);
+#else
+	FAT_Write(_buffer,_sector,&_extent);
+#endif
+	_dirty = 0;
+}
+
 void File::Load(long sector)
 {
     _mark = 0;
     if (_sector == sector)
         return;
+	if (_dirty)
+		Flush();
     _sector = sector;
 
 #ifdef USE_WIN32_FS
+	//printf("r%d ",sector);
 	DWORD r;
 	::SetFilePointer(_h,_sector*512,0,0);
 	::ReadFile(_h,_buffer,512,&r,NULL);

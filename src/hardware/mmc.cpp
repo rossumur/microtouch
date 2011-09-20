@@ -101,13 +101,28 @@ byte MMC_Token()
 	return r;
 }
 
+byte MMC_Command2(byte cmd, uint32_t param)
+{
+	byte* b = (byte*)&param;
+	byte d[7];
+	d[0] = 0xFF;
+	d[1] = cmd + 0x40;
+	d[2] = b[3];
+	d[3] = b[2];
+	d[4] = b[1];
+	d[5] = b[0];
+	d[6] = 0xFF;
+	SPI_Send(d,7);
+	return 1;
+}
+
 byte MMC_Command(byte cmd, uint32_t param)
 {
 	byte* b = (byte*)&param;
 	byte csum = 0xFF;
 	if (cmd == 0)
 		csum = 0x95;
-	if (cmd == 8)
+	else if (cmd == 8)
 		csum = 0x87;	// Avoid checksum code
 	byte d[7];
 	d[0] = 0xFF;
@@ -220,6 +235,7 @@ byte MMC_Release(byte result)
 	SPI_Disable();
 	return result;
 }
+
 byte MMC_Init()
 {
 	return MMC_Release(MMC_Init2());
@@ -237,4 +253,56 @@ byte MMC_ReadSector(byte *buffer, uint32_t sector)
 		return MMC_Release(READ_FAILED);
 	SPI_Receive(buffer,512);	// WARNING! Will strip 2 CRC bytes as well
 	return MMC_Release(0);
+}
+
+#if 0
+static char sdWaitWriteFinish(void)
+{
+  unsigned short count = 0xFFFF; // wait for quite some time
+
+  while ((SPI_ReceiveByte(0xFF) == 0) && count )
+    count--;
+
+  // If count didn't run out, return success
+  return (count != 0);
+}
+#endif
+
+byte MMC_WriteSector(byte *buffer, uint32_t sector)
+{
+	if (!(_mmcState & MMC_INITED))
+		return MMC_NOT_INITED;
+	if (!(_mmcState & MMC_HIGH_DENSITY))
+		sector <<= 9;
+
+	u8 r = WRITE_FAILED;
+	SPI_Enable();
+	MMC_SS_LOW();
+	if (MMC_Command2(24,sector) != 0)
+	{
+		u8 d = 16;
+		while (d--)
+			SPI_ReceiveByte(0xFF);	// pad
+
+		SPI_ReceiveByte(0xFE);	// Send token
+
+		SPI_Send(buffer,512);
+		SPI_ReceiveByte(0xFF);	// CRC
+		SPI_ReceiveByte(0xFF);	// CRC
+
+		u8 status;
+		while ((status = SPI_ReceiveByte(0xFF)) == 0xFF)
+			;
+		if (status == 0xE5)
+			r = 0;
+		else
+			r = status;
+
+		while (SPI_ReceiveByte(0xFF) == 0)
+			;
+		r = MMC_Release(r);
+	} else {
+		r = MMC_Release(WRITE_FAILED);
+	}
+	return r;
 }

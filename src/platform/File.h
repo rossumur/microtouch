@@ -35,7 +35,10 @@ public:
     
     byte    ReadByte();         
     int     Read(void* dst, int len);
-    
+ 
+	void    WriteByte(u8 b);         
+    int     Write(const void* src, int len);
+
     const byte* GetBuffer(int* count);
     void	Skip(int count);    // within current sector
     
@@ -45,6 +48,7 @@ public:
     
     protected:
     void    Load(long sector);
+	void	Flush();
 
 #ifdef USE_WIN32_FS
 	HANDLE _h;
@@ -52,7 +56,8 @@ public:
     long	_sector;		// Current logical sector
     byte    _buffer[512];
     int     _mark;			// within _buffer
-    
+    u8		_dirty;
+
 	ExtentInfo	_extent;	// Cluster/Extent info
 };
 

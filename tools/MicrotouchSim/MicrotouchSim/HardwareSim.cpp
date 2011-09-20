@@ -43,6 +43,11 @@ u8 MMC_ReadSector(u8* buffer, u32 sector)
 	return 1;
 }
 
+u8 MMC_WriteSector(u8* buffer, u32 sector)
+{
+	return 1;
+}
+
 u8 MMC_Init()
 {
 	return 1;
@@ -360,7 +365,7 @@ DWORD WINAPI ThreadProc(LPVOID lpParameter)
 	for (;;)
 	{
 		Shell_Loop();
-		delay(15);	// Gross approximation
+		delay(1);	// Gross approximation
 	}
 }
 

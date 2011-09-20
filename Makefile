@@ -30,12 +30,7 @@ AVRDUDE_FLAGS = -p $(MCU) -P $(AVRDUDE_PORT) -c $(AVRDUDE_PROGRAMMER) -p $(MCU)
 ## Options common to compile, link and assembly rules
 COMMON = -mmcu=$(MCU)
 
-override CFLAGS = -g -Wall -Os -mmcu=$(MCU) -DF_CPU=$(AVR_FREQ) $(DEFS) -ffunction-sections -gdwarf-2 -fdata-sections
-
-## Assembly specific flags
-ASMFLAGS = $(COMMON)
-ASMFLAGS += $(CFLAGS)
-ASMFLAGS += -x assembler-with-cpp -Wa,-gdwarf2
+CFLAGS = -g -Wall -Os -mmcu=$(MCU) -DF_CPU=$(AVR_FREQ) $(DEFS) -ffunction-sections -gdwarf-2 -fdata-sections
 
 ## Linker flags
 LDFLAGS = $(COMMON)
@@ -50,28 +45,68 @@ HEX_EEPROM_FLAGS += --change-section-lma .eeprom=0 --no-change-warnings
 ## Objects explicitly added by the user
 LINKONLYOBJECTS = 
 
+#=========================================================================
 ## Define application folders here
-## APPLICATIONS := apps/hardware
-APPLICATIONS := apps/demos
-## APPLICATIONS := apps/pacman
-## APPLICATIONS := apps/3D
 
-MODULES   := $(APPLICATIONS) apps/core platform hardware
+## Default demos: Doomed, Lattice, Flip etc
+MODULES  := apps/demos apps/core platform hardware
 
+## Hardware related apps
+ifeq ($(HARDWARE), 1)
+	MODULES  := apps/core apps/hardware platform hardware
+endif
+
+## Pacman
+ifeq ($(PACMAN), 1)
+	MODULES  := apps/pacman platform hardware
+	CFLAGS += -DNO_SHELL=1
+endif
+
+## 3D
+ifeq ($(3D), 1)
+	MODULES  := apps/3D platform hardware
+	CFLAGS += -DNO_SHELL=1
+endif
+
+#=========================================================================
+## Frotz (Zork) Demo
+## Copy the game and page file (p.pge) onto a microSD card:
+##	tools/MicrotouchSim/MicrotouchSim/microSD/game.z5
+##	tools/MicrotouchSim/MicrotouchSim/microSD/p.pge
+
+ifeq ($(ZORK), 1)
+	MODULES := platform hardware apps/frotz apps/frotz/dumb-frotz-2.32r1
+	CFLAGS += -DMIN_FLASH_SIZE=1 -DNO_SHELL=1
+	
+	ifeq ($(CLEARTYPE), 1)
+		CFLAGS += -DFROTZ_CLEARTYPE=1
+	endif
+endif
+
+#=========================================================================
 ## Wikipedia Demo
 ## Copy the data file onto a microSD card: tools/MicrotouchSim/MicrotouchSim/microSD/wiki.blb
-## Uncomment the following line to build the Wikipedia test
-## MODULES   := apps/wiki platform hardware
+
+ifeq ($(WIKI), 1)
+	MODULES := apps/wiki platform hardware
+endif
+
+#=========================================================================
+
 
 SRC_DIR   := $(addprefix src/,$(MODULES))
 BUILD_DIR := $(addprefix build/,$(MODULES))
 
 SRC       := $(foreach sdir,$(SRC_DIR),$(wildcard $(sdir)/*.cpp))
+SRC_C     := $(foreach sdir,$(SRC_DIR),$(wildcard $(sdir)/*.c))
 OBJ       := $(patsubst src/%.cpp,build/%.o,$(SRC))
+OBJ       += $(patsubst src/%.c,build/%.o,$(SRC_C))
+
 DEP		  := $(OBJ:%.o=%.d)
 INCLUDES  := $(addprefix -I,$(SRC_DIR))
 
 vpath %.cpp $(SRC_DIR)
+vpath %.c $(SRC_DIR)
 
 .PHONY: all checkdirs clean
 
@@ -80,6 +115,7 @@ all: checkdirs $(TARGET) Microtouch.hex Microtouch.lss FIRMWARE.BIN size
 -include $(DEP)
 
 checkdirs: $(BUILD_DIR)
+	@echo BUILD_DIR: $(BUILD_DIR)
 
 $(BUILD_DIR):
 	@mkdir -p $@
@@ -91,16 +127,20 @@ clean:
 	@rm -f *.lss
 	@rm -f *.map
 	@rm -f *.BIN
-	
+
 define make-goal
 $1/%.o: %.cpp
+	$(CC) $(INCLUDES) $(CFLAGS) -c $$< -MD -o $$@
+$1/%.o: %.c
 	$(CC) $(INCLUDES) $(CFLAGS) -c $$< -MD -o $$@
 endef
 
 $(foreach bdir,$(BUILD_DIR),$(eval $(call make-goal,$(bdir))))
 
+#==================================================
+
 $(TARGET): $(OBJ)
-	$(CC) $(LDFLAGS) $(LINKONLYOBJECTS) $(LIBDIRS) $(LIBS) $^ -o $@
+	$(CC) $(LDFLAGS) $(LINKONLYOBJECTS) $(LIBDIRS) $(LIBS) $^ -o $@ -lm
 
 %.hex: $(TARGET)
 	avr-objcopy -O ihex $(HEX_FLASH_FLAGS)  $< $@
@@ -117,3 +157,34 @@ size: $(TARGET)
 
 program: $(TARGET).hex
 	$(AVRDUDE) $(AVRDUDE_FLAGS) -B 1 -u -U flash:w:$(TARGET).hex
+	
+# Targets
+# defaults to 'demo'
+
+zorkinfo:
+	@echo '\nBuilding Frotz (Zork) Demo\n'
+	@echo 'Copy the game and page file (p.pge) onto a microSD card:'
+	@echo '	tools/MicrotouchSim/MicrotouchSim/microSD/game.z5'
+	@echo ' tools/MicrotouchSim/MicrotouchSim/microSD/p.pge\n\n'
+
+zork: zorkinfo clean
+	make ZORK=1
+	
+zorkcleartype: zorkinfo clean
+	@echo '###### Using fancy cleartype font - need ISP to load firmware (>28k) ######\n\n'
+	make ZORK=1 CLEARTYPE=1
+
+wiki: clean
+	make WIKI=1
+	
+hardware: clean
+	make HARDWARE=1
+
+3d: clean
+	make 3D=1
+
+pacman: clean
+	make PACMAN=1
+
+demo: clean
+	make
