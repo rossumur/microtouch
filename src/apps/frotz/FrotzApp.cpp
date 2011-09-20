@@ -792,8 +792,8 @@ public:
 			case Event::TouchDown:
 				{
 					TouchData* t = e->Touch;
-					if (t->y >= 320)
-						return -1;	// touched black bar quit
+					//if (t->y >= 320)
+					//	return -1;	// touched black bar quit
 
 					_tracking = ToKey(t);
 					if (_tracking)
