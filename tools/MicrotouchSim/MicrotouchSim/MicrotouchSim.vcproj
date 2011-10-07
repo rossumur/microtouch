@@ -41,7 +41,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\..\..\src\platform;..\..\..\src\hardware"
+				AdditionalIncludeDirectories="..\..\..\src\platform;..\..\..\src\hardware;."
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -583,6 +583,22 @@
 						>
 						<File
 							RelativePath="..\..\..\src\apps\wiki\WikiApp.cpp"
+							>
+						</File>
+					</Filter>
+					<Filter
+						Name="ebook"
+						>
+						<File
+							RelativePath="..\..\..\src\apps\ebook\ebookApp.cpp"
+							>
+						</File>
+						<File
+							RelativePath="..\..\..\src\apps\ebook\palettes.h"
+							>
+						</File>
+						<File
+							RelativePath="..\..\..\src\apps\ebook\Sans8.h"
 							>
 						</File>
 					</Filter>

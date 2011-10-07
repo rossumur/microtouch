@@ -120,7 +120,7 @@ u8 FAT_Init(u8* buf, ReadProc readProc)
 //  Cache the last file opened...
 DirectoryEntry _last_directory_entry;
 
-#ifdef USE_WIN32_FS
+#ifdef SIMULATOR
 int SimFAT_Directory(DirectoryProc directoryProc, u8* buffer, void* ref);
 int FAT_Directory(DirectoryProc directoryProc, u8* buffer, void* ref)
 {

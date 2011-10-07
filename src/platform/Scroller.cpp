@@ -25,64 +25,62 @@ const short _greys[8] =
     GREY(0x60),GREY(0x70),GREY(0x80),GREY(0x90),GREY(0xA0),GREY(0xB0),GREY(0xC0),GREY(0xD0)
 };  // dark to light
 
-//	Silly just to avoid a divide/mod
-int Mod320(int y)
+short Mod320(long y)
 {
-	while (y >= 320)
-		y -= 320;
-	while (y < 0)
-		y += 320;	// 
-	return y;
+    short m = y % 320;
+    if (m < 0)
+        m += 320;
+    return m;
 }
 
 //  Fill above and below the image
-void FillScrollBG(int y, int height, int t)
+void FillScrollBG(long y, int height, int t)
 {
-    short end = y + height;
+    long end = y + height;
     while (y < end)
     {
         short c = abs(t-y);
         c = min(7,c);
-		Graphics.Rectangle(0,Mod320(y++),240,1,pgm_read_word(_greys+c));
+        Graphics.Rectangle(0,Mod320(y++),240,1,pgm_read_word(_greys+c));
     }
 }
 
 //  Encapsulate fancy scrolling
 void Scroller::Init(long height, ScrollDrawProc drawProc, void* ref, int pageSize)
 {
-	_drawProc = drawProc;
-	_ref = ref;
-
+    _drawProc = drawProc;
+    _ref = ref;
     _velocity = 0;
     _scroll = 0;
     _scrollHeight = height;
-	_pageSize = pageSize;
+    _pageSize = pageSize;
+	_dragy = -1;
     Graphics.Scroll(0);
-	if (height > 0)
-		_drawProc(0,0,min(320,height),_ref);
+    if (height > 0)
+        _drawProc(0,0,min(320,height),_ref);
 }
 
 void Scroller::Clear(int color)
 {
-	Graphics.Clear(color);
+    Graphics.Clear(color);
 }
 
 void Scroller::SetHeight(long height)
 {
-	if (height == _scrollHeight)
+    if (height == _scrollHeight)
 		return;
-	int delta = height - _scrollHeight;
-	_scrollHeight = height;
+    long delta = height - _scrollHeight;
+    _scrollHeight = height;
 
-	if (delta > 0)
-	{
-		int top = _scrollHeight-delta;
-		if (_scrollHeight < 320)
-			delta = 320-top;
-		Invalidate(top,delta);	// Draw new area
-	}
-	else
-		Invalidate(_scrollHeight,-delta);		// Erase exposed area
+    if (delta > 0)
+    {
+        long top = _scrollHeight-delta-_scroll;
+        if (_scrollHeight < 320)
+            delta = 320-top;
+        Invalidate(top,min(320,delta));	// Draw new area
+    }
+    else
+        Invalidate(_scrollHeight,min(320,-delta));		// Erase exposed area
 }
 
 int Scroller::OnEvent(Event* e)
@@ -121,41 +119,43 @@ int Scroller::OnEvent(Event* e)
 
 void Scroller::Invalidate(long src, int lines)
 {
-	if ((src + _scroll >= 320) || (src + _scroll + lines < 0))
-		return;
+    if ((src + _scroll >= 320) || (src + _scroll + lines < 0))
+        return;
 
     // Scroll first
-    Graphics.Scroll(-_scroll);
+    Graphics.Scroll(Mod320(-_scroll));
     
     //  Draw whitespace before image
     if (src < 0)
     {
         int c = min(lines,_scroll);
-		FillScrollBG(src,c,-1);
+        FillScrollBG(src,c,-1);
         src += c;
         lines -= c;
     }
         
-    short imgLines = min(_scrollHeight-src,lines);
+    short imgLines = lines;
+    if (_scrollHeight-src < lines)
+        imgLines = _scrollHeight-src;
     if (imgLines > 0)
     {
-		DrawBody(src,imgLines);
+        DrawBody(src,imgLines);
         src += imgLines;
         lines -= imgLines;
     }
                     
     //  Draw whitespace after image
-	if (lines > 0)
+    if (lines > 0)
         FillScrollBG(src,lines,_scrollHeight);
 }
 
 //
-void Scroller::DrawBody(int y, int height)
+void Scroller::DrawBody(long y, int height)
 {
-	int py = y+_scroll;
-	if (py >= 320 || py + height <= 0)
-		return;
-	int top = Mod320(y);
+    long py = y+_scroll;
+    if (py >= 320 || py + height <= 0)
+        return;
+    int top = Mod320(y);
     int bottom = top + height;
     if (bottom > 320)	 // Wrap across screen bounds from bottom to top
     {
@@ -168,15 +168,25 @@ void Scroller::DrawBody(int y, int height)
 	_drawProc(y,top,height,_ref);
 }
 //  
-void Scroller::ScrollBy(int delta)
+void Scroller::ScrollBy(long delta)
 {
     if (delta == 0)
         return;
     _scroll += delta;
     if (delta < 0)
-        Invalidate(-_scroll+320+delta,-delta);
+    {
+        if (delta <= -320)
+            Invalidate(-_scroll,320);
+        else
+            Invalidate(-_scroll+320+delta,-delta);
+    }
     else
-        Invalidate(-_scroll,delta);
+        Invalidate(-_scroll,min(320,delta));
+}
+
+void Scroller::ScrollTo(long scroll)
+{
+    ScrollBy(-scroll - _scroll);
 }
 
 // round away from zero

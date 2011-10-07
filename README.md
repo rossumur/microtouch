@@ -114,7 +114,7 @@ into the firmware. There are a number of predefined make targets in the Makefile
 		make hardware
 		make wiki
 		make zork
-		make zorkcleartype
+		make ebook
 
 ### Shell
 
@@ -212,8 +212,20 @@ The code is based on a cut down version of frotz, the gold standard for z-machin
 A page file on the microSD card ("p.pge") acts as its backing store. By default the app loads
 "game.z5" game but will play most non v6 games: just change their name and copy to the microSD.
 
-There is a version of the interpreter that uses a nice anti aliased font - at 31k it is too big
-to load with the bootloader but ISP owners can give it a try (make zorkcleartype)
+### eBook - an ebook reader
+
+This is a reader for .EPB files (and .BKS bookshelves - collections of .EPB files). Standard format
+epub books are converted to .EPB using the epubgrinder application in the tools directory.
+
+The epubgrinder also contains a simulator. Because it is written using the QT framework it can be built
+to run on Windows, Mac and Linux.
+
+It supports multiple fonts, images, hyperlinks, smooth scrolling, rapid paging and bookmarks.
+Select a book from the scrolling list by pressing for a second, press the back bar at the bottom of the screen to return.
+
+There are a number of interesting .EPB books and .BKS bookshelves in the microSD folder and 
+in the books.zip file in the tools directory.
+
 
 ## Tools
 

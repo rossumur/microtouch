@@ -50,7 +50,15 @@ u8 MMC_WriteSector(u8* buffer, u32 sector);
 void quicksort(int arr[], int left, int right);
 #define bound(_x,_min,_max) ((_x) < (_min) ? (_min) : (((_x) > (_max)) ? (_max) : (_x)))
 
-#ifndef _WIN32
+#ifdef _WIN32
+#define SIMULATOR
+#endif
+
+#ifdef _QT
+#define SIMULATOR
+#endif
+
+#ifndef SIMULATOR
 #include <inttypes.h>
 #include <avr/pgmspace.h>
 #include <avr/eeprom.h>
@@ -79,10 +87,11 @@ public:
 
 #else
 
-#define SIMULATOR
-
+#ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#endif
+
 #include <stdlib.h>
 #include <stdarg.h>
 
@@ -94,10 +103,9 @@ public:
 #define CONST_PCHAR const char *
 typedef unsigned char uint8_t;
 typedef unsigned short uint16_t;
-typedef unsigned long uint32_t;
+//typedef unsigned long uint32_t;
 #define pgm_read_byte(_x) (*(_x))
 #define pgm_read_word(_x) (*((short*)(_x)))
-//#define USE_WIN32_FS
 #define memcpy_P memcpy
 #define strcmp_P strcmp
 #define strncpy_P strncpy
@@ -106,7 +114,7 @@ typedef unsigned long uint32_t;
 
 void _delay_ms(int ms);
 
-#define USE_WIN32_FS
+#define USE_STDIO
 #endif
 
 

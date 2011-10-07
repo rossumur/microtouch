@@ -18,8 +18,9 @@
 #include "Platform.h"
 #include "Scroller.h"
 
-// Enable for Pretty fonts and a binary >28k
-//#define FROTZ_CLEARTYPE
+// Enable for Pretty fonts
+// uses an extra 32 bytes of ram
+#define FROTZ_CLEARTYPE
 
 typedef unsigned char zchar;
 typedef unsigned char zbyte;
@@ -37,9 +38,7 @@ extern "C"
 #define LINE_HEIGHT 12
 
 #ifdef FROTZ_CLEARTYPE
-#include "FrotzFonts.h"
-const u8* _ff = FSans7;	// font
-const u8* _fpalette = FNormalPalette;
+#include "Verdana6.h"
 #endif
 
 #define P(__x) pgm_read_byte(__x)
@@ -71,72 +70,67 @@ zchar zscii_to_latin1(zbyte c)
 
 #endif
 
-static void BlitIndexedPP(const u8* pgm, const u8* pgmp, int len)
-{
-	while (len)
-	{
-		u8 b[32];
-		u8 count = 16;
-		if (len < count)
-			count = len;
-		u8 j = 0;
-		while (count--)
-		{
-			u8 index = pgm_read_byte(pgm++);	// 
-			const u8* pal = pgmp + index + index;
-			b[j++] = pgm_read_byte(pal);
-			b[j++] = pgm_read_byte(pal+1);
-		}
-		j >>= 1;
-		Graphics.Blit(b,j);
-		len -= j;
-	}
-}
-
 #ifdef FROTZ_CLEARTYPE
+
+#define TO8(_x) ((_x) | ((_x)<<4))
+#define TO16(_x) (TOCOLOR(TO8(_x),TO8(_x),TO8(_x)))
+#define PP(_x) ((TO16(_x) >> 8) & 0xFF),(TO16(_x) & 0xFF)
+extern const u8 defaultPalette[32] PROGMEM;
+const u8 defaultPalette[32] PROGMEM =
+{
+	PP(0),
+	PP(1),
+	PP(2),
+	PP(3),
+	PP(4),
+	PP(5),
+	PP(6),
+	PP(7),
+	PP(8),
+	PP(9),
+	PP(10),
+	PP(11),
+	PP(12),
+	PP(13),
+	PP(14),
+	PP(15),
+};
+
 static byte DrawChar(char c, short dx, short dy, short minY, short maxY)
 {
-	const u8* font = _ff;
-//	bool disk = font == _diskFontHeader;
-	u8 width,height,top;
-	short src,end,i;
+    const u8* font = frotzFont;
+    u8 width,height,top;
+    short src,end,i;
 
-	if (0)
-		;
-#if 0
-	if (disk)
-	{
-		height = M(font+3);
-		i = c - M(font+1);
-		i = (i + 2) << 2;
-		width = M(font+i);
-		top = M(font+i+1);
-		src = MW(font+i+2);
-		end = MW(font+i+6);
-	}
-#endif
-	else
-	{
-		height = P(font+3);
-		i = c - P(font+1);
-		i = (i + 2) << 2;
-		width = P(font+i);
-		top = P(font+i+1);
-		src = PW(font+i+2);
-		end = PW(font+i+6);
-	}
+    height = P(font+3);
+    i = c - P(font+1);
+    i = (i + 2) << 2;
+    width = P(font+i);
+	if (minY == maxY)
+		return width;
 
-    // TODO - font palettes!
+    top = P(font+i+1);
+    src = PW(font+i+2);
+    end = PW(font+i+6);
+
+    short count = ((end-src)<<1)-(top&1);  // Number of pixels to draw
+    top >>= 1;
     dy += top;
     height -= top;
 
     //  Clip top
+    u8 phase = 0;       // # of pixels to skip before drawing
+#if 0
     short clip = minY - dy;
+	// No clipping needed
     if (clip > 0)
     {
         dy += clip;
-        src += width*clip;
-        if (clip >= height)
+        short pixSkip = width*clip;
+        src += pixSkip >> 1;
+        phase = pixSkip & 1;       // Skip a pixel at start
+        count -= pixSkip;
+        if (toDraw <= 0 ||clip >= height)
             return width;
         height -= clip;
     }
@@ -148,20 +142,44 @@ static byte DrawChar(char c, short dx, short dy, short minY, short maxY)
         if (clip >= height)
             return width;
         height -= clip;
-        short e = src + width*height;
-        end = min(end,e);
+        short maxPix = width*height;
+        if (count > maxPix)
+            count = maxPix;
     }
-
-    if (height == 0 || end <= src || dx+width > 240 || dy+height > 320)
+#endif
+    if (height == 0 || dx+width > 240 || dy+height > 320)
         return width;
+    Graphics.SetBounds(dx,dy,width,height);
 
-	Graphics.SetBounds(dx,dy,width,height);
-	//if (disk)
-	//	DiskBlit(src,end-src);
-	//else
-		BlitIndexedPP(src+font,_fpalette,end-src);	// needs PROGMEM palette form?
-	return width;
+	const u8* data = font+src;
+	u8 d = 0;
+	u8 p;
+	while (count)
+    {
+		u16 buf[32];
+		u8 c = sizeof(buf)/2;
+		if (count < sizeof(buf)/2)
+			c = count;
+		count -= c;
+		u8 i = 0;
+		while (c--)
+		{
+			if (!phase)
+			{
+				d = P(data++);
+				p = d >> 4;
+			} else {
+				p = d & 0x0F;
+			}
+			buf[i++] = PW(&defaultPalette[p+p]);
+			phase ^= 1;
+		}
+		Graphics.Blit((const u8*)buf,i);
+	}
+
+    return width;
 }
+
 #endif
 
 int MeasureString(const char* c, int len)
@@ -179,7 +197,6 @@ int MeasureString(const char* c, int len)
 int DrawString(const char* c, int len, short dx, short dy)
 {
 	#ifndef FROTZ_CLEARTYPE
-		//Graphics.DrawString(c,len,dx+1,dy+1,TOCOLOR(0xD0,0xD0,0xD0));
 		return Graphics.DrawString(c,len,dx,dy,TOCOLOR(0x30,0x30,0x30));
 	#else
 		while (len--)
@@ -494,65 +511,42 @@ static char ToChar(u8 key)
 #define LINE2 KEY_TOP_MARGIN + 2*(KEY_HEIGHT + KEY_PAD)
 #define LINE3 KEY_TOP_MARGIN + 3*(KEY_HEIGHT + KEY_PAD)
 
-extern const u8 _keypos[] PROGMEM;
-const u8 _keypos[] = {
-	//	KEY_LOOK
-	LINE2,
-	KEY_LEFT_MARGIN_0,
-	LOOK_WIDTH,
+// Top,left,width
+#define KEYWIDTH KEY_WIDTH
+#define KEYPAD KEY_PAD
 
-	//	KEY_BACKSPACE
-	LINE2,
-	KEY_LEFT_MARGIN_0 + LOOK_WIDTH + KEY_PAD + 7*(KEY_WIDTH+KEY_PAD),
-	LOOK_WIDTH,
+#define RT(_n) KEY_TOP_MARGIN,KEY_LEFT_MARGIN_0+(_n)*(KEYWIDTH+KEYPAD),KEYWIDTH		// Top
+#define RM(_n) KEY_TOP_MARGIN+(KEY_HEIGHT + KEY_PAD),KEY_LEFT_MARGIN_1+(_n)*(KEYWIDTH+KEYPAD),KEYWIDTH
 
-	//	KEY_NUMBER
-	LINE3,
-	KEY_LEFT_MARGIN_3,
-	ENTER_WIDTH,
+#define K_LOOK LINE2,KEY_LEFT_MARGIN_0,LOOK_WIDTH
+#define RB(_n) LINE2,KEY_LEFT_MARGIN_1+(_n+1)*(KEYWIDTH+KEYPAD),KEYWIDTH
+#define K_DEL  LINE2,KEY_LEFT_MARGIN_1+(8)*(KEYWIDTH+KEYPAD),LOOK_WIDTH
 
-	//	KEY_SPACE
-	LINE3,
-	KEY_LEFT_MARGIN_3+ENTER_WIDTH+KEY_PAD,
-	SPACE_WIDTH,
+#define K_123   LINE3,KEY_LEFT_MARGIN_0,ENTER_WIDTH
+#define K_SPACE LINE3,KEY_LEFT_MARGIN_0 + ENTER_WIDTH + KEYPAD,SPACE_WIDTH
+#define K_ENTER LINE3,KEY_LEFT_MARGIN_0 + ENTER_WIDTH + KEYPAD + SPACE_WIDTH + KEYPAD,ENTER_WIDTH
 
-	//	KEY_ENTER
-	LINE3,
-	KEY_LEFT_MARGIN_3+ENTER_WIDTH+KEY_PAD+SPACE_WIDTH+KEY_PAD,
-	ENTER_WIDTH
+extern const u8 _keyz[] PROGMEM;
+const u8 _keyz[] = {
+	RT(0),RT(1),RT(2),RT(3),RT(4),RT(5),RT(6),RT(7),RT(8),RT(9),	// qwertyuiop
+		  RM(0),RM(1),RM(2),RM(3),RM(4),RM(5),RM(6),RM(7),RM(8),	//  asdfghjkl
+			    RB(0),RB(1),RB(2),RB(3),RB(4),RB(5),RB(6),
+			
+	K_LOOK												 ,K_DEL,	// L zxcvbnm D
+	K_123,			  K_SPACE,		                K_ENTER,0		//123 spac ent
 };
 
 //	Keyboard def
 
 static u8 ToRect(u8 key, u8* kx, u8* ky)
 {
-	if (key >= KEY_LOOK)
-	{
-		key -= KEY_LOOK;
-		key += key + key;
-		*ky = pgm_read_byte(_keypos+key++);
-		*kx = pgm_read_byte(_keypos+key++);
-		return pgm_read_byte(_keypos+key);
-	}
-
-	*kx = KEY_LEFT_MARGIN_0;
-	u8 x = key-1;
-	u8 y = 0;
-	if (x >= 19)
-	{
-		x -= 19;
-		y = 2;
-		*kx = KEY_LEFT_MARGIN_2;
-	}
-	else if (x >= 10)
-	{
-		x -= 10;
-		y = 1;
-		*kx = KEY_LEFT_MARGIN_1;
-	}
-	*kx += x*(KEY_WIDTH + KEY_PAD);
-	*ky = KEY_TOP_MARGIN + y*(KEY_HEIGHT + KEY_PAD);
-	return KEY_WIDTH;
+	const u8* k = _keyz;
+	--key;
+	key += key + key;
+	k += key;
+	*ky = pgm_read_byte(k);
+	*kx = pgm_read_byte(k+1);
+	return pgm_read_byte(k+2);
 }
 
 static u8 ToKey(TouchData* t)
@@ -567,55 +561,52 @@ static u8 ToKey(TouchData* t)
 	return KEY_NONE;
 }
 
-static void KeyOutline(u8 x, u8 y, u8 width, bool hilite)
+static void KeyOutline(u8 x, short y, u8 width, bool hilite)
 {
 	int c = TOCOLOR(0xA0,0xA0,0xA0);
 	if (hilite)
 		c = 0;
-	Graphics.Rectangle(x,KEYBOARD_TOP+y-1,width,1,c);
-	Graphics.Rectangle(x,KEYBOARD_TOP+y+KEY_HEIGHT,width,1,c);
-	Graphics.Rectangle(x-1,KEYBOARD_TOP+y,1,KEY_HEIGHT,c);
-	Graphics.Rectangle(x+width,KEYBOARD_TOP+y,1,KEY_HEIGHT,c);
+	y += KEYBOARD_TOP;
+	Graphics.Rectangle(x,y-1,width,1,c);
+	Graphics.Rectangle(x,y+KEY_HEIGHT,width,1,c);
+	Graphics.Rectangle(x-1,y,1,KEY_HEIGHT,c);
+	Graphics.Rectangle(x+width,y,1,KEY_HEIGHT,c);
 }
 
-extern const char S_look[] PROGMEM;
-extern const char S_backspace[] PROGMEM;
-extern const char S_123[] PROGMEM;
-extern const char S_abc[] PROGMEM;
-extern const char S_space[] PROGMEM;
-extern const char S_enter[] PROGMEM;
-extern const char S_Loading[] PROGMEM;
 
-const char S_look[] = "look";
-const char S_backspace[] = "<";
-const char S_123[] = "123";
-const char S_abc[] = "abc";
-const char S_space[] = "space";
-const char S_enter[] = "enter";
+extern const char S_text[] PROGMEM;
+const char S_text[] = 
+	"look\0\0"
+	"<\0\0\0\0\0"
+	"123\0\0\0"
+	"space\0"
+	"enter\0"
+	"abc\0\0\0";
+
 const char S_Loading[] = "Loading..";
+extern const char S_Loading[] PROGMEM;
 
 static void DrawKey(u8 key, bool hilite)
 {
 	u8 kx,ky;
 	u8 w = ToRect(key,&kx,&ky);
 	int bg = key <= 26 ? 0xFFFF : TOCOLOR(0xF0,0xF0,0xFF);
-	Graphics.Rectangle(kx,KEYBOARD_TOP+ky,w,KEY_HEIGHT,hilite ? TOCOLOR(0xD0,0xFF,0xD0) : bg);
+	Graphics.Rectangle(kx,ky+KEYBOARD_TOP,w,KEY_HEIGHT,hilite ? TOCOLOR(0xD0,0xFF,0xD0) : bg);
 	KeyOutline(kx,ky,w,hilite);
 
 	char buf[8];
-	const char* b = 0;
 	buf[0] = ToChar(key);
 	buf[1] = 0;
-	switch (key)
+	if (key >= KEY_LOOK)
 	{
-		case KEY_LOOK:		b = S_look;			break;
-		case KEY_BACKSPACE:	b = S_backspace;	break;
-		case KEY_NUMBERS:	b = _keyMode ? S_abc : S_123;		break;
-		case KEY_SPACE:		b = S_space;	break;
-		case KEY_ENTER:		b = S_enter;	break;
+		key -= KEY_LOOK;
+		if (_keyMode && key == 2)
+			key += 3;
+		const char* b = S_text + key*6;
+		u8 i = 6;
+		while (i--)
+			buf[i] = pgm_read_byte(&b[i]);
 	}
-	if (b)
-		strcpy_P(buf,b);
 	u8 len = strlen(buf);
 	u8 m = MeasureString(buf,len);
 	DrawString(buf,len,kx + ((w-m)>>1),KEYBOARD_TOP+ky+5);

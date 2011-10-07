@@ -53,7 +53,7 @@ const char S_DrawNum[] = "%d";
 void MillivoltToStr(char* s, int mv);
 
 byte MMC_Init();
-byte MMC_ReadSector(byte *buffer, uint32_t sector);
+byte MMC_ReadSector(byte *buffer, u32 sector);
 void TouchHWTest(int* config);
 
 class Widget

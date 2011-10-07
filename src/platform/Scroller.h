@@ -8,7 +8,7 @@ public:
 
 protected:
     long _scroll;			//todo will need to be long for >100 pages
-    short _scrollHeight;
+    long _scrollHeight;
     short _dragy;
     short _velocity;
 	short _pageSize;
@@ -17,18 +17,18 @@ protected:
 	void* _ref;
     
 public:
-	long CurrentScroll() { return _scroll; }
+    long CurrentScroll() { return - _scroll; }
 	void Init(long height, ScrollDrawProc drawProc, void* ref, int pageSize = 0);
 	void Clear(int color = 0xFFFF);
 	int OnEvent(Event* e);
-    void ScrollTo(int delta);
+	void ScrollTo(long delta);
 	void SetHeight(long height);
 	bool Stopped();
 
 protected:
-	void DrawBody(int y, int height);
+	void DrawBody(long y, int height);
 	int Acceleration();
-    void ScrollBy(int delta);
+	void ScrollBy(long delta);
 	void Invalidate(long src, int lines);
-    void AutoScroll();
+	void AutoScroll();
 };

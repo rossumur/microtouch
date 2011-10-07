@@ -1,0 +1,11 @@
+<RCC>
+    <qresource prefix="/">
+        <file>images/defaultCover.jpg</file>
+        <file>fonts/Sans12Bold.ctf</file>
+        <file>fonts/Sans12.ctf</file>
+        <file>fonts/Sans10Bold.ctf</file>
+        <file>fonts/Sans10.ctf</file>
+        <file>fonts/Sans8Bold.ctf</file>
+        <file>fonts/Sans8.ctf</file>
+    </qresource>
+</RCC>

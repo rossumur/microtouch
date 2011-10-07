@@ -32,6 +32,7 @@ public:
     
     byte    Open(const char* path);
     byte    OpenMem(const byte* data);
+    byte    Close();
     
     byte    ReadByte();         
     int     Read(void* dst, int len);
@@ -50,8 +51,8 @@ public:
     void    Load(long sector);
 	void	Flush();
 
-#ifdef USE_WIN32_FS
-	HANDLE _h;
+#ifdef USE_STDIO
+    FILE* _f;
 #endif
     long	_sector;		// Current logical sector
     byte    _buffer[512];

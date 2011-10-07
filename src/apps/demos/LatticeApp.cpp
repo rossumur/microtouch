@@ -218,12 +218,6 @@ class LatticeState
 				}
 			}
 		}
-
-	#ifdef __WIN32
-		char st[100];
-		sprintf(st,"%d %2.2f ssize\n",_gits,(float)_ss/_gits);
-		::OutputDebugStringA(st);
-	#endif
 		return 0;
 	}
 

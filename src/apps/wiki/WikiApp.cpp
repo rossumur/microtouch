@@ -445,7 +445,7 @@ public:
 
 	void Show(long scroll)
 	{
-		scroll = ScrollRange(-scroll + 320-20);
+		scroll = ScrollRange(scroll + 320-20);
 		DrawImageWrap(BUTTONBAR_PATH,0,scroll,20);	// Wrap around 320 boundary
 		_visible = true;
 	}
@@ -1157,7 +1157,7 @@ public:
 
     long ToScrollY(ushort y)
     {
-        return y - _scroller.CurrentScroll();
+        return y + _scroller.CurrentScroll();
     }
 
     bool InLink(ushort x, ushort y)
@@ -1483,7 +1483,7 @@ public:
 	{
 		if (_buttonBar.Hide())
 		{
-			long y = (320-20) - _scroller.CurrentScroll();
+			long y = (320-20) + _scroller.CurrentScroll();
 			Draw(y,y,20);
 		}
 	}

@@ -77,7 +77,8 @@ endif
 ifeq ($(ZORK), 1)
 	MODULES := platform hardware apps/frotz apps/frotz/dumb-frotz-2.32r1
 	CFLAGS += -DMIN_FLASH_SIZE=1 -DNO_SHELL=1
-	
+	CFLAGS += -funsigned-char -funsigned-bitfields -fpack-struct -fshort-enums
+	CFLAGS += -fno-inline-small-functions -fno-split-wide-types -fno-tree-scev-cprop
 	ifeq ($(CLEARTYPE), 1)
 		CFLAGS += -DFROTZ_CLEARTYPE=1
 	endif
@@ -89,6 +90,15 @@ endif
 
 ifeq ($(WIKI), 1)
 	MODULES := apps/wiki platform hardware
+endif
+
+#=========================================================================
+## ebook Demo
+## Copy the data file onto a microSD card: tools/MicrotouchSim/MicrotouchSim/microSD/books.epb
+
+ifeq ($(EBOOK), 1)
+	MODULES := apps/ebook platform hardware
+	CFLAGS += -DMIN_FLASH_SIZE=1 -DNO_SHELL=1
 endif
 
 #=========================================================================
@@ -169,22 +179,33 @@ zorkinfo:
 
 zork: zorkinfo clean
 	make ZORK=1
+	@cp $(TARGET) prebuilt/microtouchzork/zork.hex
 	
 zorkcleartype: zorkinfo clean
 	@echo '###### Using fancy cleartype font - need ISP to load firmware (>28k) ######\n\n'
 	make ZORK=1 CLEARTYPE=1
+	@cp $(TARGET) prebuilt/microtouchzork/zork.hex
 
 wiki: clean
 	make WIKI=1
+	@cp $(TARGET) prebuilt/wikipedia.hex
+	
+ebook: clean
+	make EBOOK=1
+	@cp $(TARGET) prebuilt/ebook.hex
 	
 hardware: clean
 	make HARDWARE=1
+	@cp $(TARGET) prebuilt/hardware.hex
 
 3d: clean
 	make 3D=1
+	@cp $(TARGET) prebuilt/3d.hex
 
 pacman: clean
 	make PACMAN=1
+	@cp $(TARGET) prebuilt/pacman.hex
 
 demo: clean
 	make
+	@cp $(TARGET) prebuilt/demos.hex

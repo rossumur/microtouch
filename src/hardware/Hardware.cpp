@@ -454,7 +454,41 @@ u8 TouchSample(int* xx, int* yy)
 	return t;	// Range to 0..255
 }
 
-//	Get the median 0f 5 valid sample
+void slowsort(int* s, u8 k)
+{
+	for (u8 i = 0; i < k-1; i++)
+	{
+		for (u8 j = i+1; j < k; j++)
+		{
+			if (s[i] > s[j])
+			{
+				int t = s[i];
+				s[i] = s[j];
+				s[j] = t;
+			}
+		}
+	}
+}
+
+
+int median5(int* s)
+{
+	for (u8 i = 0; i < 3; i++)
+	{
+		for (u8 j = i+1; j < 5; j++)
+		{
+			if (s[i] > s[j])
+			{
+				int t = s[i];
+				s[i] = s[j];
+				s[j] = t;
+			}
+		}
+	}
+	return s[2];
+}
+
+//	Get the median 0f 5 valid samples
 u8 TouchOversample(int* xx, int *yy)
 {
 #define MEDIAN_COUNT 5
@@ -471,14 +505,9 @@ u8 TouchOversample(int* xx, int *yy)
 			z[s] = p;
 			if (++s == MEDIAN_COUNT)	// got 5 valid samples?
 			{
-				quicksort(x,0,MEDIAN_COUNT-1);	// median filter
-				quicksort(y,0,MEDIAN_COUNT-1);
-
-				*xx = x[MEDIAN_COUNT/2];
-				*yy = y[MEDIAN_COUNT/2];
-
-				quicksort(z,0,MEDIAN_COUNT-1);
-				return z[MEDIAN_COUNT/2];
+				*xx = median5(x);
+				*yy = median5(y);
+				return median5(z);
 			}
 		}
 	}

@@ -24,11 +24,7 @@ File::File()
 
 File::~File()
 {
-	if (_dirty)
-		Flush();
-#ifdef USE_WIN32_FS
-	CloseHandle(_h);
-#endif
+	Close();
 }
 
 void File::Init()
@@ -37,28 +33,41 @@ void File::Init()
     _extent.fileLength = 0;
     _sector = -1;
 	_dirty = 0;
-#ifdef USE_WIN32_FS
-	_h = INVALID_HANDLE_VALUE;
+
+#ifdef SIMULATOR
+	_f = 0;
 #endif
+}
+
+byte File::Close()
+{
+	if (_dirty)
+		Flush();
+	_sector = -1;
+#ifdef SIMULATOR
+	if (_f)
+        fclose(_f);
+	_f = 0;
+#endif
+	return 0;
 }
 
 byte File::Open(const char* path)
 {
-#ifdef USE_WIN32_FS
+#ifdef SIMULATOR
     char s[1024];
-    sprintf(s,"microSD\\%s",path);
-    if (_h != INVALID_HANDLE_VALUE)
-        ::CloseHandle(_h);
-    _h = ::CreateFileA(s,
-            GENERIC_READ | GENERIC_WRITE,
-            0,
-            NULL,
-            OPEN_EXISTING,
-            FILE_ATTRIBUTE_NORMAL,
-            NULL );
-    Load(0);
-    _extent.fileLength = GetFileSize( _h, NULL );
-    return _h == INVALID_HANDLE_VALUE ? 0 : 1;
+    sprintf(s,"microSD/%s",path);
+    if (_f)
+        fclose(_f);
+    _f = fopen(s,"r+b");
+    if (_f)
+    {
+        fseek(_f,0,SEEK_END);
+        _extent.fileLength = ftell(_f);
+        fseek(_f,0,SEEK_SET);
+        Load(0);
+    }
+    return _f ? 1 : 0;
 #else
 
     if (FAT_Open(path,&_extent,_buffer))
@@ -100,12 +109,12 @@ void File::WriteByte(byte b)
 {
     if (_mark == 512)
         Load(_sector + 1);
-	if (b != _buffer[_mark])
-	{
-		_dirty = 1;
-		_buffer[_mark] = b;
-	}
-	_mark++;
+    if (b != _buffer[_mark])
+    {
+            _dirty = 1;
+            _buffer[_mark] = b;
+    }
+    _mark++;
 }
 
 int File::Write(const void* d, int len)
@@ -137,11 +146,10 @@ void File::Skip(int count)
 
 void File::Flush()
 {
-#ifdef USE_WIN32_FS
-	printf("w%d ",_sector);
-	DWORD r;
-	::SetFilePointer(_h,_sector*512,0,0);
-	::WriteFile(_h,_buffer,512,&r,NULL);
+#ifdef SIMULATOR
+        //printf("w%d ",_sector);
+        fseek(_f,_sector*512,SEEK_SET);
+        int e = fwrite(_buffer,512,1,_f);
 #else
 	FAT_Write(_buffer,_sector,&_extent);
 #endif
@@ -157,11 +165,10 @@ void File::Load(long sector)
 		Flush();
     _sector = sector;
 
-#ifdef USE_WIN32_FS
-	//printf("r%d ",sector);
-	DWORD r;
-	::SetFilePointer(_h,_sector*512,0,0);
-	::ReadFile(_h,_buffer,512,&r,NULL);
+#ifdef SIMULATOR
+        //printf("r%d ",sector);
+        fseek(_f,_sector*512,SEEK_SET);
+        fread(_buffer,512,1,_f);
 #else
 	FAT_Read(_buffer,sector,&_extent);
 #endif
@@ -177,3 +184,65 @@ void  File::SetPos(long pos)
     Load(pos >> 9);
     _mark = pos & 0x1FF;
 }
+
+#ifdef SIMULATOR
+#include <dirent.h>
+#include <ctype.h>
+
+static
+void ToFATName(char* dst, const char* src)
+{
+    memset(dst,' ',11);
+    char c;
+    for (int i = 0; i < 8; i++)
+    {
+            c = *src++;
+            if (c == '.')
+                    break;
+            if (!c)
+                    return;
+            dst[i] = toupper(c);
+    }
+    while (c != '.')
+    {
+            c = *src++;
+            if (!c)
+                    return;
+    }
+    for (int i = 8; i < 11; i++)
+    {
+            c = *src++;
+            if (!c)
+                    return;
+            dst[i] = toupper(c);
+    }
+}
+
+
+int SimFAT_Directory(DirectoryProc directoryProc, u8* buffer, void* ref)
+{
+    DIR* dir = opendir("microSD");
+    if (dir == 0)
+        return -1;
+
+    DirectoryEntry entry;
+    struct dirent *dp;
+    int index = 0;
+    int result = -1;
+    while ((dp = readdir (dir)) != NULL)
+    {
+        if (dp->d_name[0] == '.')
+            continue;
+        memset(&entry,0,sizeof(entry));
+        ToFATName(entry.fatname,dp->d_name);
+        if (directoryProc(&entry,index,ref))
+        {
+            result = index;
+            break;
+        }
+        index++;
+    }
+    closedir(dir);
+    return result;
+}
+#endif
